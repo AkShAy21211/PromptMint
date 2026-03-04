@@ -1,0 +1,291 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { pricingTiers } from "@/lib/pricing-data";
+import { PricingCard } from "@/components/pricing/PricingCard";
+import { createClient } from "@/lib/supabase/client";
+import { type User } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
+import Script from "next/script";
+import { useRouter } from "next/navigation";
+import { Sparkles, ArrowLeft, ShieldCheck, Zap, Globe, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import Link from "next/link";
+
+export default function PricingPage() {
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState<string | null>(null);
+    const [currentPlan, setCurrentPlan] = useState("free");
+    const { toast } = useToast();
+    const supabase = createClient();
+    const router = useRouter();
+
+    useEffect(() => {
+        const getData = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('plan_type')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) setCurrentPlan(profile.plan_type);
+            }
+        };
+        getData();
+    }, []);
+
+    const handleUpgrade = async (tier: { id: string, name: string, priceNumeric: number }) => {
+        if (!user) {
+            toast({
+                title: "Authentication Required",
+                description: "Please sign in to upgrade your plan.",
+                variant: "destructive",
+            });
+            router.push("/?login=true");
+            return;
+        }
+
+        setLoading(tier.id);
+
+        if (typeof window !== 'undefined' && (window as any).posthog) {
+            (window as any).posthog.capture('upgrade_started', {
+                plan_id: tier.id,
+                amount: tier.priceNumeric
+            });
+        }
+
+        try {
+            const res = await fetch("/api/razorpay/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    planId: tier.id,
+                    amount: tier.priceNumeric
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || "Failed to create order");
+
+            const options = {
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: data.amount,
+                currency: data.currency,
+                name: "PromptMint Professional",
+                description: `${tier.name} Plan Subscription`,
+                image: "/icons/icon-192x192.png",
+                order_id: data.id,
+                handler: async function (response: any) {
+                    try {
+                        toast({
+                            title: "Payment Captured",
+                            description: "Verifying your subscription... please wait.",
+                        });
+
+                        const verifyRes = await fetch("/api/razorpay/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                ...response,
+                                planId: tier.id
+                            }),
+                        });
+
+                        if (verifyRes.ok) {
+                            if (typeof window !== 'undefined' && (window as any).posthog) {
+                                (window as any).posthog.capture('upgrade_verified', { plan_id: tier.id });
+                            }
+                            toast({
+                                title: "Plan Upgraded!",
+                                description: `Welcome to the ${tier.name} tier!`,
+                            });
+                            router.push("/account?sync=true");
+                        } else {
+                            const errorData = await verifyRes.json();
+                            if (typeof window !== 'undefined' && (window as any).posthog) {
+                                (window as any).posthog.capture('upgrade_failed', { reason: 'verification_failed', plan_id: tier.id });
+                            }
+                            throw new Error(errorData.error || "Verification failed");
+                        }
+                    } catch (err: any) {
+                        toast({
+                            title: "Verification Error",
+                            description: err.message,
+                            variant: "destructive",
+                        });
+                    } finally {
+                        setLoading(null);
+                    }
+                },
+                prefill: {
+                    email: user.email,
+                },
+                theme: {
+                    color: "#8b5cf6",
+                },
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.on('payment.failed', function (response: any) {
+                if (typeof window !== 'undefined' && (window as any).posthog) {
+                    (window as any).posthog.capture('upgrade_failed', { reason: 'payment_failed', plan_id: tier.id, error: response.error.description });
+                }
+            });
+            rzp.open();
+        } catch (err: any) {
+            toast({
+                title: "Payment Error",
+                description: err.message,
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    return (
+        <main className="min-h-screen bg-background text-foreground selection:bg-violet-500/30 overflow-x-hidden">
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+
+            {/* Background Decor */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/10 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-600/10 blur-[100px] rounded-full" />
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 py-12">
+                <nav className="flex items-center justify-between mb-20 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            onClick={() => router.push("/")}
+                            className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
+                        >
+                            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                            Back to Editor
+                        </Button>
+                        <ThemeToggle />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-cyan-600 flex items-center justify-center p-0.5">
+                            <div className="w-full h-full bg-background dark:bg-zinc-950 rounded-[6px] flex items-center justify-center">
+                                <Sparkles className="w-4 h-4 text-violet-400" />
+                            </div>
+                        </div>
+                        <span className="font-bold tracking-tight text-foreground/90">PromptMint PRO</span>
+                    </div>
+                </nav>
+
+                <header className="text-center max-w-3xl mx-auto mb-20 space-y-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <span className="px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-6 inline-block">
+                            Pricing Options
+                        </span>
+                        <h1 className="text-5xl md:text-6xl font-black tracking-tight text-foreground mb-6">
+                            Amplify Your <br />
+                            <span className="bg-gradient-to-r from-cyan-600 via-violet-600 to-emerald-600 dark:from-cyan-400 dark:via-violet-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                                Creative Velocity
+                            </span>
+                        </h1>
+                        <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed">
+                            From curious guests to elite architects. Choose the tier that matches your engineering ambition.
+                        </p>
+                    </motion.div>
+                </header>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch mb-24">
+                    {pricingTiers.map((tier: { id: string, name: string, price: string, description: string, features: string[], isPopular: boolean, priceNumeric: number }) => (
+                        <PricingCard
+                            key={tier.id}
+                            tier={tier.name as any}
+                            price={tier.price}
+                            description={tier.description}
+                            features={tier.features}
+                            isPopular={tier.isPopular}
+                            currentPlan={currentPlan}
+                            isLoading={loading === tier.id}
+                            onUpgrade={() => handleUpgrade(tier)}
+                        />
+                    ))}
+                </div>
+
+                {/* ROI Justification Section */}
+                <section className="mt-8 mb-24 max-w-4xl mx-auto rounded-3xl bg-zinc-900 overflow-hidden border border-zinc-800 relative shadow-2xl">
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 pointer-events-none" />
+                    <div className="p-12 md:p-16 text-center relative z-10">
+                        <h2 className="text-3xl md:text-4xl font-black text-white mb-6 tracking-tight">
+                            PromptMint saves hours of <span className="text-violet-400">debugging time.</span>
+                        </h2>
+                        <p className="text-zinc-400 text-lg mb-12 max-w-2xl mx-auto leading-relaxed">
+                            A developer's time is valuable. If PromptMint saves you from just ONE frustrating, 20-minute debugging loop with AI every month, your subscription has already generated a positive ROI.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                            <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
+                                <div className="text-rose-400 font-bold mb-3 flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-rose-400"></div> Without Us
+                                </div>
+                                <p className="text-sm text-zinc-400 leading-relaxed">Type "build a navbar", get generic CSS, ask to fix it to Tailwind, fix missing imports, argue about responsive design. <strong className="text-zinc-300 block mt-2">(Time: ~25 mins)</strong></p>
+                            </div>
+                            <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
+                                <div className="text-emerald-400 font-bold mb-3 flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div> With PromptMint
+                                </div>
+                                <p className="text-sm text-zinc-400 leading-relaxed">Type idea, get structured prompt, paste into AI, get highly structured, ready-to-test code significantly faster. <strong className="text-zinc-300 block mt-2">(Time: ~2 mins)</strong></p>
+                            </div>
+                            <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
+                                <div className="text-cyan-400 font-bold mb-3 flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-cyan-400"></div> The Result
+                                </div>
+                                <p className="text-sm text-zinc-400 leading-relaxed">Accelerate feature development. Provide better initial context to stay in the creative flow state. Build more, wrestle with AI less.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Global Features / Trust Bar */}
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-12 py-16 border-y border-border dark:border-white/5">
+                    <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20">
+                            <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                        </div>
+                        <h4 className="font-bold text-foreground">Secure Payments</h4>
+                        <p className="text-sm text-muted-foreground">PCI-DSS compliant transactions powered by Razorpay.</p>
+                    </div>
+                    <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center border border-cyan-500/20">
+                            <Zap className="w-6 h-6 text-cyan-500" />
+                        </div>
+                        <h4 className="font-bold text-foreground">Instant Unlock</h4>
+                        <p className="text-sm text-muted-foreground">Pro features activated immediately after verification.</p>
+                    </div>
+                    <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center border border-violet-500/20">
+                            <Globe className="w-6 h-6 text-violet-500" />
+                        </div>
+                        <h4 className="font-bold text-foreground">Global History</h4>
+                        <p className="text-sm text-muted-foreground">Access your prompt history from any device, anywhere.</p>
+                    </div>
+                </section>
+
+                <footer className="mt-24 pb-12 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col items-center justify-between gap-4 text-xs font-medium text-muted-foreground">
+                    <div className="flex items-center gap-6 mt-4">
+                        <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+                        <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    );
+}

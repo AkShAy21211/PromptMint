@@ -1,0 +1,48 @@
+export const pricingTiers = [
+    {
+        id: "free",
+        name: "Free",
+        price: "₹0",
+        priceNumeric: 0,
+        description: "Perfect for testing the waters and small personal projects.",
+        features: [
+            "5 total prompts (forever)",
+            "Standard CO-STAR templates",
+            "Local history storage",
+            "Essential tech stacks",
+            "Test in Claude",
+        ],
+        isPopular: false,
+    },
+    {
+        id: "pro_monthly",
+        name: "Pro",
+        price: "₹499",
+        priceNumeric: 499,
+        description: "The sweet spot for active developers and prompt engineers.",
+        features: [
+            "Unlimited custom prompts",
+            "Cloud-synced prompt history",
+            "Doc Export (.doc)",
+            "Usage Analytics",
+            "Priority Support",
+            "Cancel Anytime",
+        ],
+        isPopular: true,
+    },
+    // {
+    //     id: "lifetime",
+    //     name: "Lifetime",
+    //     price: "₹4999",
+    //     priceNumeric: 4999,
+    //     description: "One-time investment for eternal creative freedom.",
+    //     features: [
+    //         "Everything in Pro plan",
+    //         "Pay once, use forever",
+    //         "Early access to new features",
+    //         "Limited: First 10 users only",
+    //         "Free updates forever",
+    //     ],
+    //     isPopular: false,
+    // },
+];
