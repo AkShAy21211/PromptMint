@@ -45,15 +45,17 @@ export default function Home() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
 
       if (user) {
         // Fetch usage count from profiles table
         const { data: profile } = await supabase
-          .from('profiles')
-          .select('usage_count, is_pro')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("usage_count, is_pro")
+          .eq("id", user.id)
           .single();
 
         if (profile) {
@@ -70,26 +72,33 @@ export default function Home() {
 
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         // Fetch or create profile
         let { data: profile } = await supabase
-          .from('profiles')
-          .select('usage_count, is_pro, plan_type')
-          .eq('id', session.user.id)
+          .from("profiles")
+          .select("usage_count, is_pro, plan_type")
+          .eq("id", session.user.id)
           .maybeSingle();
 
         const { error: profileError } = await supabase
-          .from('profiles')
-          .select('usage_count, is_pro, plan_type')
-          .eq('id', session.user.id)
+          .from("profiles")
+          .select("usage_count, is_pro, plan_type")
+          .eq("id", session.user.id)
           .maybeSingle();
 
         if (!profile && !profileError) {
           const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .upsert({ id: session.user.id, usage_count: 0, is_pro: false, plan_type: 'free' })
+            .from("profiles")
+            .upsert({
+              id: session.user.id,
+              usage_count: 0,
+              is_pro: false,
+              plan_type: "free",
+            })
             .select()
             .single();
 
@@ -98,7 +107,10 @@ export default function Home() {
 
         if (profile) {
           setPromptCount(profile.usage_count);
-          const unlimited = profile.is_pro || profile.plan_type === 'pro' || profile.plan_type === 'lifetime';
+          const unlimited =
+            profile.is_pro ||
+            profile.plan_type === "pro" ||
+            profile.plan_type === "lifetime";
           setIsPro(unlimited);
 
           // Only trigger migration for Pro/Lifetime users
@@ -118,7 +130,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    if (typeof window !== 'undefined' && window.posthog) {
+    if (typeof window !== "undefined" && window.posthog) {
       window.posthog.reset?.();
     }
     window.location.href = "/";
@@ -128,7 +140,8 @@ export default function Home() {
     if (userIdea.trim().length < 4) {
       toast({
         title: "Input too short",
-        description: "Please provide a bit more detail about your idea (at least 4 characters).",
+        description:
+          "Please provide a bit more detail about your idea (at least 4 characters).",
         variant: "destructive",
       });
       return;
@@ -190,9 +203,12 @@ export default function Home() {
           idea: userIdea,
           result: generatedResult,
           stack: stack, // Include stack for better restoration
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([newEntry, ...history].slice(0, 10)));
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify([newEntry, ...history].slice(0, 10)),
+        );
 
         // Update guest count only if not logged in
         if (!user) {
@@ -200,13 +216,13 @@ export default function Home() {
         }
       }
 
-      if (typeof window !== 'undefined' && window.posthog) {
-        window.posthog.capture('prompt_minted', {
+      if (typeof window !== "undefined" && window.posthog) {
+        window.posthog.capture("prompt_minted", {
           styling: stack.styling,
           language: stack.language,
           animation: stack.animation,
           is_pro: isPro,
-          prompt_length: userIdea.length
+          prompt_length: userIdea.length,
         });
       }
 
@@ -220,13 +236,19 @@ export default function Home() {
       // Scroll to result on mobile
       if (window.innerWidth < 1024) {
         setTimeout(() => {
-          outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          outputRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
         }, 100);
       }
     } catch (error: unknown) {
       toast({
         title: "Generation Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -237,7 +259,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30">
       <div className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
-
         {/* Top Navigation */}
         <nav className="mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <motion.div
@@ -257,7 +278,9 @@ export default function Home() {
               <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
                 PromptMint
               </h1>
-              <p className="text-muted-foreground text-sm font-medium tracking-wide">AI Prompt Engineering Suite</p>
+              <p className="text-muted-foreground text-sm font-medium tracking-wide">
+                AI Prompt Engineering Suite
+              </p>
             </div>
           </motion.div>
 
@@ -286,21 +309,34 @@ export default function Home() {
                   <div className="h-3 w-20 bg-muted dark:bg-zinc-800 rounded-md animate-pulse" />
                 </div>
               ) : isPro ? (
-                <Link href="/account" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Link
+                  href="/account"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                  <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">PRO UNLIMITED</span>
+                  <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
+                    PRO UNLIMITED
+                  </span>
                 </Link>
               ) : (
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
-                    <div className={cn(
-                      "w-2 h-2 rounded-full",
-                      promptCount >= MAX_FREE ? "bg-rose-500" : "bg-emerald-500"
-                    )} />
-                    <span className={cn(
-                      "text-xs font-bold uppercase tracking-wider",
-                      promptCount >= MAX_FREE ? "text-rose-500" : "text-emerald-500"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        promptCount >= MAX_FREE
+                          ? "bg-rose-500"
+                          : "bg-emerald-500",
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "text-xs font-bold uppercase tracking-wider",
+                        promptCount >= MAX_FREE
+                          ? "text-rose-500"
+                          : "text-emerald-500",
+                      )}
+                    >
                       {MAX_FREE - promptCount}/{MAX_FREE} PROMPTS LEFT
                     </span>
                   </div>
@@ -355,7 +391,9 @@ export default function Home() {
               <span className="text-violet-500">structured AI prompt</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-              Reduce the friction of AI generation. We architect your initial idea into a CO-STAR mega-prompt that significantly improves the quality of code generated on the first try.
+              Reduce the friction of AI generation. We architect your initial
+              idea into a CO-STAR mega-prompt that significantly improves the
+              quality of code generated on the first try.
             </p>
             <div className="flex items-center gap-4 pt-2">
               <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-5 py-2.5 rounded-full border border-emerald-500/20 text-sm font-bold shadow-[0_0_15px_rgba(16,185,129,0.1)]">
@@ -365,13 +403,15 @@ export default function Home() {
           </div>
 
           {/* Comparison Component */}
-          <div className="flex-[1.2] w-full bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col min-h-[300px]">
 
+          <div className="flex-[1.2] w-full bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
             {/* Header */}
             <div className="flex border-b border-zinc-800">
               <div className="flex-1 px-5 py-3 border-r border-zinc-800 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                <span className="text-zinc-500 text-xs font-semibold tracking-widest uppercase">Your prompt</span>
+                <span className="text-zinc-500 text-xs font-semibold tracking-widest uppercase">
+                  Your prompt
+                </span>
               </div>
               <div className="flex-1 px-5 py-3 flex items-center gap-2 bg-violet-500/5">
                 <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
@@ -382,16 +422,24 @@ export default function Home() {
             </div>
 
             {/* Content */}
-            <div className="flex flex-1">
-
+            <div className="flex flex-col md:flex-row">
               {/* Left — Vague Input */}
-              <div className="flex-1 p-5 border-r border-zinc-800 flex flex-col gap-4 bg-black/30">
+              <div className="md:flex-1 p-5 border-b border-zinc-800 md:border-b-0 md:border-r md:border-zinc-800 flex flex-col gap-4 bg-black/30">
                 <div className="bg-zinc-900 border border-zinc-700/60 rounded-xl p-3 font-mono text-sm text-rose-300">
                   &quot;build me a dark navbar&quot;
                 </div>
                 <div className="flex flex-col gap-2">
-                  {["Framework?", "CSS approach?", "TypeScript?", "Animations?", "Responsive?"].map((q) => (
-                    <div key={q} className="flex items-center gap-2 text-xs text-zinc-600">
+                  {[
+                    "Framework?",
+                    "CSS approach?",
+                    "TypeScript?",
+                    "Animations?",
+                    "Responsive?",
+                  ].map((q) => (
+                    <div
+                      key={q}
+                      className="flex items-center gap-2 text-xs text-zinc-600"
+                    >
                       <span className="text-rose-700 font-bold">✗</span>
                       <span>{q}</span>
                     </div>
@@ -403,29 +451,46 @@ export default function Home() {
               </div>
 
               {/* Right — Structured Output */}
-              <div className="flex-1 p-5 flex flex-col gap-3 relative bg-gradient-to-br from-violet-500/10 to-cyan-500/5">
+              <div className="md:flex-1 p-5 flex flex-col gap-3 relative bg-gradient-to-br from-violet-500/10 to-cyan-500/5">
                 <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-violet-500 to-cyan-500"></div>
                 {[
-                  { label: "Stack", value: "Next.js + Tailwind + TS", color: "text-cyan-300" },
-                  { label: "Style", value: "Framer Motion, accessible", color: "text-violet-300" },
-                  { label: "Output", value: "Mobile-first, dark theme", color: "text-emerald-300" },
+                  {
+                    label: "Stack",
+                    value: "Next.js + Tailwind + TS",
+                    color: "text-cyan-300",
+                  },
+                  {
+                    label: "Style",
+                    value: "Framer Motion, accessible",
+                    color: "text-violet-300",
+                  },
+                  {
+                    label: "Output",
+                    value: "Mobile-first, dark theme",
+                    color: "text-emerald-300",
+                  },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 flex items-center gap-3">
-                    <span className="text-zinc-500 text-xs w-12 shrink-0">{label}</span>
-                    <span className={`text-xs font-medium ${color}`}>{value}</span>
+                  <div
+                    key={label}
+                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 flex items-center gap-3"
+                  >
+                    <span className="text-zinc-500 text-xs w-12 shrink-0">
+                      {label}
+                    </span>
+                    <span className={`text-xs font-medium ${color}`}>
+                      {value}
+                    </span>
                   </div>
                 ))}
                 <div className="mt-auto bg-emerald-950/40 border border-emerald-800/40 rounded-lg p-3 text-xs text-emerald-400">
                   ✓ Right output, first try. Every time.
                 </div>
               </div>
-
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-
           {/* Left Column: Input Panel (Sticky on Desktop) */}
           <div className="lg:sticky lg:top-12 space-y-8">
             <div className="space-y-3">
@@ -452,21 +517,53 @@ export default function Home() {
               <div className="grid gap-6 p-6 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50">
                 <StackToggle
                   label="Styling"
-                  options={["Tailwind CSS", "shadcn/ui", "CSS Modules", "NativeWind", "SwiftUI", "Jetpack Compose", "Material UI", "Chakra UI", "Bootstrap"]}
+                  options={[
+                    "Tailwind CSS",
+                    "shadcn/ui",
+                    "CSS Modules",
+                    "NativeWind",
+                    "SwiftUI",
+                    "Jetpack Compose",
+                    "Material UI",
+                    "Chakra UI",
+                    "Bootstrap",
+                  ]}
                   selected={stack.styling}
-                  onChange={(val) => setStack({ ...stack, styling: val as StylingType })}
+                  onChange={(val) =>
+                    setStack({ ...stack, styling: val as StylingType })
+                  }
                 />
                 <StackToggle
                   label="Language"
-                  options={["TypeScript", "JavaScript", "Swift", "Kotlin", "Java", "Python", "Go", "C# (Unity)"]}
+                  options={[
+                    "TypeScript",
+                    "JavaScript",
+                    "Swift",
+                    "Kotlin",
+                    "Java",
+                    "Python",
+                    "Go",
+                    "C# (Unity)",
+                  ]}
                   selected={stack.language}
-                  onChange={(val) => setStack({ ...stack, language: val as LanguageType })}
+                  onChange={(val) =>
+                    setStack({ ...stack, language: val as LanguageType })
+                  }
                 />
                 <StackToggle
                   label="Animation"
-                  options={["Framer Motion", "Reanimated", "GSAP", "Lottie", "CSS Keyframes", "None"]}
+                  options={[
+                    "Framer Motion",
+                    "Reanimated",
+                    "GSAP",
+                    "Lottie",
+                    "CSS Keyframes",
+                    "None",
+                  ]}
                   selected={stack.animation}
-                  onChange={(val) => setStack({ ...stack, animation: val as AnimationType })}
+                  onChange={(val) =>
+                    setStack({ ...stack, animation: val as AnimationType })
+                  }
                 />
               </div>
             </div>
@@ -510,31 +607,69 @@ export default function Home() {
           <div ref={outputRef} className="space-y-6">
             <div className="lg:min-h-[600px] flex flex-col">
               {result || isLoading ? (
-                <PromptOutput result={result} isLoading={isLoading} isPro={isPro} />
+                <PromptOutput
+                  result={result}
+                  isLoading={isLoading}
+                  isPro={isPro}
+                />
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-card/20 dark:bg-zinc-900/20 border border-dashed border-border dark:border-zinc-800 rounded-3xl min-h-[500px]">
                   <div className="w-16 h-16 bg-violet-500/10 rounded-2xl flex items-center justify-center mb-6">
                     <Sparkles className="w-8 h-8 text-violet-500" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Reduce friction with AI generation.</h3>
+                  <h3 className="text-2xl font-bold mb-3">
+                    Reduce friction with AI generation.
+                  </h3>
                   <p className="text-muted-foreground max-w-sm mb-8">
-                    Type a brief idea. We use the CO-STAR framework to architect a comprehensive mega-prompt that significantly improves the structure of code generated on the first try.
+                    Type a brief idea. We use the CO-STAR framework to architect
+                    a comprehensive mega-prompt that significantly improves the
+                    structure of code generated on the first try.
                   </p>
 
                   <div className="grid grid-cols-2 gap-4 w-full max-w-lg text-left">
                     <div className="p-4 rounded-xl bg-card border border-border shadow-sm">
                       <h4 className="font-bold text-sm text-emerald-500 mb-1 flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
                         Higher Success Rate
                       </h4>
-                      <p className="text-xs text-muted-foreground">Minimize back-and-forth iteration loops by giving the AI comprehensive instructions upfront.</p>
+                      <p className="text-xs text-muted-foreground">
+                        Minimize back-and-forth iteration loops by giving the AI
+                        comprehensive instructions upfront.
+                      </p>
                     </div>
                     <div className="p-4 rounded-xl bg-card border border-border shadow-sm">
                       <h4 className="font-bold text-sm text-cyan-500 mb-1 flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
                         Strict Stack Alignment
                       </h4>
-                      <p className="text-xs text-muted-foreground">Forces the AI to strictly respect your chosen frontend, backend, and styling stack.</p>
+                      <p className="text-xs text-muted-foreground">
+                        Forces the AI to strictly respect your chosen frontend,
+                        backend, and styling stack.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -544,10 +679,16 @@ export default function Home() {
                 onRestore={(entry) => {
                   setResult(entry.result);
                   setUserIdea(entry.idea);
-                  if (entry.stack) setStack(entry.stack as unknown as import("@/lib/types").Stack);
+                  if (entry.stack)
+                    setStack(
+                      entry.stack as unknown as import("@/lib/types").Stack,
+                    );
 
                   setTimeout(() => {
-                    outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    outputRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
                   }, 100);
                 }}
                 user={user}
@@ -562,13 +703,22 @@ export default function Home() {
       <footer className="mt-12 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
         <p>© 2026 PromptMint. All rights reserved.</p>
         <div className="flex items-center gap-6">
-          <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-          <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+          <Link
+            href="/terms"
+            className="hover:text-foreground transition-colors"
+          >
+            Terms of Service
+          </Link>
+          <Link
+            href="/privacy"
+            className="hover:text-foreground transition-colors"
+          >
+            Privacy Policy
+          </Link>
         </div>
       </footer>
 
       <LoginModal
-
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
       />
@@ -582,6 +732,6 @@ export default function Home() {
         isGuest={!user}
       />
       <Toaster />
-    </main >
+    </main>
   );
 }
