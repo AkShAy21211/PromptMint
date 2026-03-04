@@ -109,15 +109,15 @@ export default function PricingPage() {
                             router.push("/account?sync=true");
                         } else {
                             const errorData = await verifyRes.json();
-                            if (typeof window !== 'undefined' && (window as any).posthog) {
-                                (window as any).posthog.capture('upgrade_failed', { reason: 'verification_failed', plan_id: tier.id });
+                            if (typeof window !== 'undefined' && 'posthog' in window) {
+                                (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('upgrade_failed', { reason: 'verification_failed', plan_id: tier.id });
                             }
                             throw new Error(errorData.error || "Verification failed");
                         }
-                    } catch (err: any) {
+                    } catch (err: unknown) {
                         toast({
                             title: "Verification Error",
-                            description: err.message,
+                            description: err instanceof Error ? err.message : "Verification failed",
                             variant: "destructive",
                         });
                     } finally {
@@ -132,17 +132,17 @@ export default function PricingPage() {
                 },
             };
 
-            const rzp = new (window as any).Razorpay(options);
-            rzp.on('payment.failed', function (response: any) {
-                if (typeof window !== 'undefined' && (window as any).posthog) {
-                    (window as any).posthog.capture('upgrade_failed', { reason: 'payment_failed', plan_id: tier.id, error: response.error.description });
+            const rzp = new (window as unknown as { Razorpay: new (opts: Record<string, unknown>) => { on: (event: string, cb: (r: { error: { description: string } }) => void) => void; open: () => void } }).Razorpay(options);
+            rzp.on('payment.failed', function (response: { error: { description: string } }) {
+                if (typeof window !== 'undefined' && 'posthog' in window) {
+                    (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('upgrade_failed', { reason: 'payment_failed', plan_id: tier.id, error: response.error.description });
                 }
             });
             rzp.open();
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast({
                 title: "Payment Error",
-                description: err.message,
+                description: err instanceof Error ? err.message : "Payment failed",
                 variant: "destructive",
             });
         } finally {
@@ -208,7 +208,7 @@ export default function PricingPage() {
                     {pricingTiers.map((tier: { id: string, name: string, price: string, description: string, features: string[], isPopular: boolean, priceNumeric: number }) => (
                         <PricingCard
                             key={tier.id}
-                            tier={tier.name as any}
+                            tier={tier.name as "Free" | "Pro" | "Lifetime"}
                             price={tier.price}
                             description={tier.description}
                             features={tier.features}
@@ -228,7 +228,7 @@ export default function PricingPage() {
                             PromptMint saves hours of <span className="text-violet-400">debugging time.</span>
                         </h2>
                         <p className="text-zinc-400 text-lg mb-12 max-w-2xl mx-auto leading-relaxed">
-                            A developer's time is valuable. If PromptMint saves you from just ONE frustrating, 20-minute debugging loop with AI every month, your subscription has already generated a positive ROI.
+                            A developer&apos;s time is valuable. If PromptMint saves you from just ONE frustrating, 20-minute debugging loop with AI every month, your subscription has already generated a positive ROI.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
@@ -236,7 +236,7 @@ export default function PricingPage() {
                                 <div className="text-rose-400 font-bold mb-3 flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-rose-400"></div> Without Us
                                 </div>
-                                <p className="text-sm text-zinc-400 leading-relaxed">Type "build a navbar", get generic CSS, ask to fix it to Tailwind, fix missing imports, argue about responsive design. <strong className="text-zinc-300 block mt-2">(Time: ~25 mins)</strong></p>
+                                <p className="text-sm text-zinc-400 leading-relaxed">Type &quot;build a navbar&quot;, get generic CSS, ask to fix it to Tailwind, fix missing imports, argue about responsive design. <strong className="text-zinc-300 block mt-2">(Time: ~25 mins)</strong></p>
                             </div>
                             <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
                                 <div className="text-emerald-400 font-bold mb-3 flex items-center gap-2">

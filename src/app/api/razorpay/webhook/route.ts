@@ -25,7 +25,6 @@ export async function POST(req: Request) {
         // Handle successful payment
         if (event.event === "payment.captured") {
             const payment = event.payload.payment.entity;
-            const orderId = payment.order_id;
 
             // We need to fetch the order to get the notes (userId, planId)
             // Alternatively, we can use the notes directly from the payment if they were passed
@@ -51,8 +50,8 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json({ status: "ok" });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Razorpay Webhook Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Webhook processing failed" }, { status: 500 });
     }
 }

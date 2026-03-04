@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Share2, FileText, Sparkles } from "lucide-react";
+import { Copy, Check, Share2, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,6 @@ interface PromptOutputProps {
  */
 export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
     const [copied, setCopied] = useState(false);
-    const [testCopied, setTestCopied] = useState(false);
     const [shared, setShared] = useState(false);
     const [testPlatform, setTestPlatform] = useState<string | null>(null);
     const { toast } = useToast();
@@ -66,13 +65,11 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
         // Copy to clipboard first (Always a good fail-safe)
         try {
             await navigator.clipboard.writeText(prompt);
-            setTestCopied(true);
             setTimeout(() => {
-                setTestCopied(false);
                 setTestPlatform(null);
             }, 3000);
-        } catch (err) {
-            console.error("Clipboard failed", err);
+        } catch {
+            // clipboard failed silently
         }
 
         // Map of platform URL structures
@@ -95,8 +92,8 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
 
         const canShare = typeof navigator !== 'undefined' && !!navigator.share;
 
-        if (typeof window !== 'undefined' && (window as any).posthog) {
-            (window as any).posthog.capture('prompt_shared', { method: canShare ? 'native' : 'clipboard' });
+        if (typeof window !== 'undefined' && 'posthog' in window) {
+            (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('prompt_shared', { method: canShare ? 'native' : 'clipboard' });
         }
 
         if (canShare) {
@@ -106,7 +103,7 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
                     text: `Check out this structured prompt I minted:\n\n${prompt.substring(0, 100)}...`,
                     url: window.location.origin
                 });
-            } catch (err) {
+            } catch {
                 // User cancelled or silent fail
             }
         } else {
@@ -171,8 +168,8 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
         link.click();
         document.body.removeChild(link);
 
-        if (typeof window !== 'undefined' && (window as any).posthog) {
-            (window as any).posthog.capture('doc_exported');
+        if (typeof window !== 'undefined' && 'posthog' in window) {
+            (window as unknown as { posthog: { capture: (e: string) => void } }).posthog.capture('doc_exported');
         }
     };
 

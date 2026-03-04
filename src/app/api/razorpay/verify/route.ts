@@ -43,8 +43,8 @@ export async function POST(req: Request) {
         if (error) throw error;
 
         return NextResponse.json({ status: "success", plan_type: planId });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Payment Verification Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Verification failed" }, { status: 500 });
     }
 }

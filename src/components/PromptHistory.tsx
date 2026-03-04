@@ -4,19 +4,19 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { History, ChevronDown, ChevronUp, Trash2, ArrowUpRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export interface HistoryEntry {
     idea: string;
     result: string;
-    stack?: any;
+    stack?: Record<string, string>;
     timestamp: number;
 }
 
 interface PromptHistoryProps {
     onRestore: (entry: HistoryEntry) => void;
-    user?: any;
+    user?: User | null;
     isPro?: boolean;
     refreshTrigger?: number;
 }
@@ -49,7 +49,8 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
                     if (error) throw error;
 
                     if (data) {
-                        setHistory(data.map((p: any) => ({
+                        type SupabasePromptRow = { title: string; content: string; stack: Record<string, string>; created_at: string };
+                        setHistory((data as SupabasePromptRow[]).map((p) => ({
                             idea: p.title,
                             result: p.content,
                             stack: p.stack,
@@ -61,7 +62,7 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
                 }
             } catch (e) {
                 // For guests, free users, or if Supabase fails
-                if (user && isPro && (e as any).message !== "Local Only") {
+                if (user && isPro && (e instanceof Error && e.message !== "Local Only")) {
                     setIsOffline(true);
                 }
 
@@ -79,7 +80,7 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
         };
 
         fetchHistory();
-    }, [user, isPro, refreshTrigger]);
+    }, [user, isPro, refreshTrigger, supabase]);
 
     const clearHistory = async () => {
         try {

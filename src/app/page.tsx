@@ -223,10 +223,10 @@ export default function Home() {
           outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 100);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Generation Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -544,7 +544,7 @@ export default function Home() {
                 onRestore={(entry) => {
                   setResult(entry.result);
                   setUserIdea(entry.idea);
-                  if (entry.stack) setStack(entry.stack);
+                  if (entry.stack) setStack(entry.stack as unknown as import("@/lib/types").Stack);
 
                   setTimeout(() => {
                     outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
