@@ -73,7 +73,7 @@ export default function AccountPage() {
     }
 
     const MAX_FREE = 5;
-    const usagePercentage = Math.min((profile?.usage_count / MAX_FREE) * 100, 100);
+    const usagePercentage = Math.min(((profile?.usage_count ?? 0) / MAX_FREE) * 100, 100);
     const isPro = profile?.plan_type === 'pro' || profile?.plan_type === 'lifetime';
 
     return (
