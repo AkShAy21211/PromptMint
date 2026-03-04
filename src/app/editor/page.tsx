@@ -2,7 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Stack, StylingType, LanguageType, AnimationType } from "@/lib/types";
+import {
+  Stack,
+  StylingType,
+  LanguageType,
+  AnimationType,
+  FrameworkType,
+  DatabaseType,
+  ApiPatternType,
+} from "@/lib/types";
 import { StackToggle } from "@/components/StackToggle";
 import { PromptOutput } from "@/components/PromptOutput";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +30,23 @@ import { migrateLocalPrompts } from "@/lib/supabase/migration";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const MAX_FREE = 5;
+
+// Frameworks that are purely backend — when selected, animation and styling
+// are hidden since they don't apply to a server-only context.
+const BACKEND_ONLY_FRAMEWORKS: FrameworkType[] = [
+  "Express",
+  "NestJS",
+  "FastAPI",
+  "Django",
+  "Spring Boot",
+  "Laravel",
+];
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function EditorPage() {
   const router = useRouter();
   const [userIdea, setUserIdea] = useState("");
@@ -29,6 +54,9 @@ export default function EditorPage() {
     styling: "shadcn/ui",
     language: "TypeScript",
     animation: "Framer Motion",
+    framework: "None",
+    database: "None",
+    apiPattern: "None",
   });
   const [result, setResult] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -38,10 +66,15 @@ export default function EditorPage() {
   const [promptCount, setPromptCount] = useState(0);
   const [isPro, setIsPro] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const MAX_FREE = 5;
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  // True when the selected framework is backend-only (hides frontend-specific rows)
+  const isBackendOnly =
+    !!stack.framework && BACKEND_ONLY_FRAMEWORKS.includes(stack.framework);
+
+  // ─── Auth ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const getUser = async () => {
@@ -132,6 +165,8 @@ export default function EditorPage() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  // ─── Handlers ──────────────────────────────────────────────────────────────
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     if (typeof window !== "undefined" && window.posthog) {
@@ -144,7 +179,8 @@ export default function EditorPage() {
     if (userIdea.trim().length < 4) {
       toast({
         title: "Input too short",
-        description: "Please provide a bit more detail about your idea (at least 4 characters).",
+        description:
+          "Please provide a bit more detail about your idea (at least 4 characters).",
         variant: "destructive",
       });
       return;
@@ -220,6 +256,9 @@ export default function EditorPage() {
           styling: stack.styling,
           language: stack.language,
           animation: stack.animation,
+          framework: stack.framework,
+          database: stack.database,
+          apiPattern: stack.apiPattern,
           is_pro: isPro,
           prompt_length: userIdea.length,
         });
@@ -251,6 +290,8 @@ export default function EditorPage() {
     }
   };
 
+  // ─── Render ────────────────────────────────────────────────────────────────
+
   return (
     <main className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30">
       <div className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
@@ -262,7 +303,6 @@ export default function EditorPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            {/* Logo links back to landing */}
             <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
               <div className="w-12 h-12 relative rounded-2xl overflow-hidden shadow-xl shadow-cyan-900/20 border border-white/10">
                 <Image
@@ -380,13 +420,15 @@ export default function EditorPage() {
 
           {/* Left Column: Input Panel */}
           <div className="lg:sticky lg:top-12 space-y-8">
+
+            {/* Step 1: Idea */}
             <div className="space-y-3">
               <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
                 Step 1: Define Your Idea
               </span>
               <div className="relative group">
                 <Textarea
-                  placeholder="Describe your development task (e.g., 'a secure authentication flow with JWTs', or 'a responsive landing page hero')..."
+                  placeholder="Describe your development task (e.g., 'a secure authentication flow with JWTs', 'CRUD app with Express and PostgreSQL', or 'responsive landing page hero')..."
                   className="min-h-[200px] bg-card/40 dark:bg-zinc-900/40 border-border dark:border-zinc-800 hover:border-border/80 dark:hover:border-zinc-700/50 focus:border-cyan-500/50 focus:ring-cyan-500/10 text-lg resize-none p-5 rounded-2xl transition-all placeholder:text-muted-foreground/40"
                   value={userIdea}
                   onChange={(e) => setUserIdea(e.target.value)}
@@ -397,32 +439,168 @@ export default function EditorPage() {
               </div>
             </div>
 
-            <div className="space-y-6">
+            {/* Step 2: Stack */}
+            <div className="space-y-4">
               <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
                 Step 2: Refine Your Stack
               </span>
-              <div className="grid gap-6 p-6 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50">
-                <StackToggle
-                  label="Styling"
-                  options={["Tailwind CSS", "shadcn/ui", "CSS Modules", "NativeWind", "SwiftUI", "Jetpack Compose", "Material UI", "Chakra UI", "Bootstrap"]}
-                  selected={stack.styling}
-                  onChange={(val) => setStack({ ...stack, styling: val as StylingType })}
-                />
-                <StackToggle
-                  label="Language"
-                  options={["TypeScript", "JavaScript", "Swift", "Kotlin", "Java", "Python", "Go", "C# (Unity)"]}
-                  selected={stack.language}
-                  onChange={(val) => setStack({ ...stack, language: val as LanguageType })}
-                />
-                <StackToggle
-                  label="Animation"
-                  options={["Framer Motion", "Reanimated", "GSAP", "Lottie", "CSS Keyframes", "None"]}
-                  selected={stack.animation}
-                  onChange={(val) => setStack({ ...stack, animation: val as AnimationType })}
-                />
+
+              <div className="rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 divide-y divide-border dark:divide-zinc-800/50 overflow-hidden">
+
+                {/* ── Framework / Runtime ── */}
+                <div className="p-5">
+                  <StackToggle
+                    label="Framework"
+                    options={[
+                      "None",
+                      "Next.js",
+                      "React",
+                      "Vue",
+                      "Express",
+                      "NestJS",
+                      "FastAPI",
+                      "Django",
+                      "Spring Boot",
+                      "Laravel",
+                    ]}
+                    selected={stack.framework ?? "None"}
+                    onChange={(val) =>
+                      setStack({ ...stack, framework: val as FrameworkType })
+                    }
+                  />
+                </div>
+
+                {/* ── Database / ORM ── */}
+                <div className="p-5">
+                  <StackToggle
+                    label="Database / ORM"
+                    options={[
+                      "None",
+                      "PostgreSQL",
+                      "MySQL",
+                      "MongoDB",
+                      "SQLite",
+                      "Redis",
+                      "Supabase",
+                      "Prisma",
+                      "Drizzle",
+                    ]}
+                    selected={stack.database ?? "None"}
+                    onChange={(val) =>
+                      setStack({ ...stack, database: val as DatabaseType })
+                    }
+                  />
+                </div>
+
+                {/* ── API Pattern ── */}
+                <div className="p-5">
+                  <StackToggle
+                    label="API Pattern"
+                    options={["None", "REST", "GraphQL", "tRPC", "WebSockets", "Server Actions"]}
+                    selected={stack.apiPattern ?? "None"}
+                    onChange={(val) =>
+                      setStack({ ...stack, apiPattern: val as ApiPatternType })
+                    }
+                  />
+                </div>
+
+                {/* ── Divider with label ── */}
+                <div className="px-5 py-2 bg-zinc-900/40">
+                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                    Frontend / UI
+                  </span>
+                </div>
+
+                {/* ── Language ── */}
+                <div className="p-5">
+                  <StackToggle
+                    label="Language"
+                    options={["TypeScript", "JavaScript", "Swift", "Kotlin", "Java", "Python", "Go", "C# (Unity)"]}
+                    selected={stack.language}
+                    onChange={(val) => setStack({ ...stack, language: val as LanguageType })}
+                  />
+                </div>
+
+                {/* ── Styling — hidden for backend-only frameworks ── */}
+                <AnimatePresence>
+                  {!isBackendOnly && (
+                    <motion.div
+                      key="styling-row"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-5">
+                        <StackToggle
+                          label="Styling"
+                          options={[
+                            "Tailwind CSS",
+                            "shadcn/ui",
+                            "CSS Modules",
+                            "NativeWind",
+                            "SwiftUI",
+                            "Jetpack Compose",
+                            "Material UI",
+                            "Chakra UI",
+                            "Bootstrap",
+                          ]}
+                          selected={stack.styling}
+                          onChange={(val) =>
+                            setStack({ ...stack, styling: val as StylingType })
+                          }
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* ── Animation — hidden for backend-only frameworks ── */}
+                <AnimatePresence>
+                  {!isBackendOnly && (
+                    <motion.div
+                      key="animation-row"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-5">
+                        <StackToggle
+                          label="Animation"
+                          options={["Framer Motion", "Reanimated", "GSAP", "Lottie", "CSS Keyframes", "None"]}
+                          selected={stack.animation}
+                          onChange={(val) =>
+                            setStack({ ...stack, animation: val as AnimationType })
+                          }
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
               </div>
+
+              {/* Hint when backend-only mode is active */}
+              <AnimatePresence>
+                {isBackendOnly && (
+                  <motion.p
+                    key="backend-hint"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="text-xs text-zinc-500 px-1"
+                  >
+                    Styling and animation options are hidden — they don&apos;t apply to a server-only{" "}
+                    <span className="text-zinc-400 font-medium">{stack.framework}</span> project.
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
 
+            {/* Generate Button */}
             <div className="flex flex-col gap-3">
               <Button
                 size="lg"
