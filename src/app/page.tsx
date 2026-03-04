@@ -45,29 +45,40 @@ export default function Home() {
 
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        console.log("[v0] Starting auth initialization...");
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        console.log("[v0] Auth getUser completed, user:", user ? "found" : "null");
+        setUser(user);
 
-      if (user) {
-        // Fetch usage count from profiles table
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("usage_count, is_pro")
-          .eq("id", user.id)
-          .single();
+        if (user) {
+          // Fetch usage count from profiles table
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("usage_count, is_pro")
+            .eq("id", user.id)
+            .single();
 
-        if (profile) {
-          setPromptCount(profile.usage_count);
-          setIsPro(profile.is_pro);
+          if (profile) {
+            setPromptCount(profile.usage_count);
+            setIsPro(profile.is_pro);
+          }
+        } else {
+          // Fallback to local storage for guest
+          const count = localStorage.getItem("guest_prompt_count");
+          setPromptCount(count ? parseInt(count) : 0);
         }
-      } else {
-        // Fallback to local storage for guest
+      } catch (error) {
+        // If Supabase fails, fall back to guest mode
+        console.error("[v0] Failed to initialize auth:", error);
         const count = localStorage.getItem("guest_prompt_count");
         setPromptCount(count ? parseInt(count) : 0);
+      } finally {
+        console.log("[v0] Auth init complete, setting isInitialLoading to false");
+        setIsInitialLoading(false);
       }
-      setIsInitialLoading(false);
     };
 
     getUser();
@@ -75,50 +86,57 @@ export default function Home() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        // Fetch or create profile
-        let { data: profile } = await supabase
-          .from("profiles")
-          .select("usage_count, is_pro, plan_type")
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .select("usage_count, is_pro, plan_type")
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        if (!profile && !profileError) {
-          const { data: newProfile, error: createError } = await supabase
+      try {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Fetch or create profile
+          let { data: profile } = await supabase
             .from("profiles")
-            .upsert({
-              id: session.user.id,
-              usage_count: 0,
-              is_pro: false,
-              plan_type: "free",
-            })
-            .select()
-            .single();
+            .select("usage_count, is_pro, plan_type")
+            .eq("id", session.user.id)
+            .maybeSingle();
 
-          if (!createError) profile = newProfile;
-        }
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .select("usage_count, is_pro, plan_type")
+            .eq("id", session.user.id)
+            .maybeSingle();
 
-        if (profile) {
-          setPromptCount(profile.usage_count);
-          const unlimited =
-            profile.is_pro ||
-            profile.plan_type === "pro" ||
-            profile.plan_type === "lifetime";
-          setIsPro(unlimited);
+          if (!profile && !profileError) {
+            const { data: newProfile, error: createError } = await supabase
+              .from("profiles")
+              .upsert({
+                id: session.user.id,
+                usage_count: 0,
+                is_pro: false,
+                plan_type: "free",
+              })
+              .select()
+              .single();
 
-          // Only trigger migration for Pro/Lifetime users
-          if (unlimited) {
-            await migrateLocalPrompts(session.user.id);
+            if (!createError) profile = newProfile;
           }
+
+          if (profile) {
+            setPromptCount(profile.usage_count);
+            const unlimited =
+              profile.is_pro ||
+              profile.plan_type === "pro" ||
+              profile.plan_type === "lifetime";
+            setIsPro(unlimited);
+
+            // Only trigger migration for Pro/Lifetime users
+            if (unlimited) {
+              await migrateLocalPrompts(session.user.id);
+            }
+          }
+        } else {
+          setIsPro(false);
+          const count = localStorage.getItem("guest_prompt_count");
+          setPromptCount(count ? parseInt(count) : 0);
         }
-      } else {
+      } catch (error) {
+        console.error("Auth state change error:", error);
         setIsPro(false);
         const count = localStorage.getItem("guest_prompt_count");
         setPromptCount(count ? parseInt(count) : 0);
