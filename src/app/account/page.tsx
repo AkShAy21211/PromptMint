@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { type User } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -32,6 +32,7 @@ export default function AccountPage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     const supabase = createClient();
 
@@ -53,15 +54,11 @@ export default function AccountPage() {
             setProfile(profileData);
             setLoading(false);
 
-            // React to ?sync query in client environment
-            if (typeof window !== 'undefined') {
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('sync')) {
-                    toast({
-                        title: "Dashboard Synchronized",
-                        description: "Your plan status and usage have been updated.",
-                    });
-                }
+            if (searchParams.get('sync')) {
+                toast({
+                    title: "Dashboard Synchronized",
+                    description: "Your plan status and usage have been updated.",
+                });
             }
         };
         getData();
@@ -105,9 +102,7 @@ export default function AccountPage() {
                         variant="ghost"
                         onClick={async () => {
                             await supabase.auth.signOut();
-                            if (typeof window !== 'undefined' && window.posthog) {
-                                window.posthog.reset?.();
-                            }
+                            (window as Window & { posthog?: { reset?: () => void } }).posthog?.reset?.();
                             window.location.href = "/";
                         }}
                         className="text-muted-foreground hover:text-rose-400 hover:bg-rose-400/5 rounded-2xl"
@@ -130,7 +125,7 @@ export default function AccountPage() {
                     )}>
                         {profile?.plan_type === 'lifetime' ? <Trophy className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
                         <span className="font-bold uppercase tracking-widest text-xs">
-                            {profile?.plan_type?.toUpperCase() || 'FREE'} MEMBERSHIP
+                            {(profile?.plan_type ?? 'FREE').toUpperCase()} MEMBERSHIP
                         </span>
                     </div>
                 </header>
@@ -155,7 +150,7 @@ export default function AccountPage() {
                                     {isPro ? "Total Mintings" : "Lifetime Prompts"}
                                 </span>
                                 <div className="text-right">
-                                    <span className="text-2xl font-black text-foreground">{profile?.usage_count || 0}</span>
+                                    <span className="text-2xl font-black text-foreground">{profile?.usage_count ?? 0}</span>
                                     {!isPro && <span className="text-muted-foreground/60 text-sm font-bold">/{MAX_FREE}</span>}
                                 </div>
                             </div>
@@ -206,7 +201,7 @@ export default function AccountPage() {
 
                             <div className="space-y-1">
                                 <p className="text-xs text-muted-foreground/60 font-bold uppercase tracking-widest">Active Plan</p>
-                                <p className="text-2xl font-black text-foreground capitalize">{profile?.plan_type || 'Free'}</p>
+                                <p className="text-2xl font-black text-foreground capitalize">{profile?.plan_type ?? 'Free'}</p>
                                 <p className="text-muted-foreground text-sm leading-relaxed">
                                     {isPro
                                         ? "Thank you for supporting PromptMint. You have full access to all professional features."
@@ -230,7 +225,6 @@ export default function AccountPage() {
                 <section className="bg-muted/30 dark:bg-zinc-900/20 border border-border dark:border-white/5 rounded-3xl p-8 text-center space-y-4">
                     <p className="text-muted-foreground text-sm font-medium">Need help with your subscription or have questions?</p>
                     <div className="flex items-center justify-center gap-6">
-                        <a href="#" className="text-violet-500 text-sm font-bold hover:underline">Help Center</a>
                         <div className="w-1 h-1 bg-zinc-800 rounded-full" />
                         <a href="#" className="text-violet-500 text-sm font-bold hover:underline">Contact Support</a>
                     </div>
