@@ -30,7 +30,7 @@ export function LimitModal({ isOpen, onClose, onLogin, isGuest }: LimitModalProp
                             <div className="flex justify-between items-start mb-8">
                                 <div className="flex items-center gap-3 text-rose-500 bg-rose-500/10 px-4 py-2 rounded-full border border-rose-500/20">
                                     <Lock className="w-5 h-5" />
-                                    <span className="font-bold tracking-wide text-sm">You've used your 5 free prompts for this month</span>
+                                    <span className="font-bold tracking-wide text-sm">You&apos;ve used your 5 free prompts for this month</span>
                                 </div>
                                 <button
                                     onClick={onClose}
