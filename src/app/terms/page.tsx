@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -38,14 +37,14 @@ export default function TermsOfService() {
                     <section>
                         <h2>1. Agreement to Terms</h2>
                         <p>
-                            By accessing or using PromptMint (the "Service"), you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you must not access our service.
+                            By accessing or using PromptMint (the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you must not access our service.
                         </p>
                     </section>
 
                     <section>
                         <h2>2. Subscriptions & Payments</h2>
                         <p>
-                            PromptMint operates on a subscription model ("Pro") and a one-time purchase model ("Lifetime"). Pricing is listed as ₹499/mo (or equivalent).
+                            PromptMint operates on a subscription model (&quot;Pro&quot;) and a one-time purchase model (&quot;Lifetime&quot;). Pricing is listed as ₹499/mo (or equivalent).
                         </p>
                         <ul>
                             <li><strong>Taxes:</strong> All listed prices are exclusive of applicable GST unless stated otherwise. Applicable GST is automatically calculated and charged during checkout via Razorpay.</li>
@@ -84,7 +83,7 @@ export default function TermsOfService() {
                     <section>
                         <h2>6. Limitation of Liability</h2>
                         <p>
-                            The Service relies on third-party Artificial Intelligence APIs. PromptMint provides no warranty regarding the accuracy, reliability, or quality of the AI-generated outputs. Google Gemini's Terms of Service also apply.
+                            The Service relies on third-party Artificial Intelligence APIs. PromptMint provides no warranty regarding the accuracy, reliability, or quality of the AI-generated outputs. Google Gemini&apos;s Terms of Service also apply.
                         </p>
                     </section>
 

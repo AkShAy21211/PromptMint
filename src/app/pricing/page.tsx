@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { pricingTiers } from "@/lib/pricing-data";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { createClient } from "@/lib/supabase/client";
@@ -9,7 +9,7 @@ import { type User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { Sparkles, ArrowLeft, ShieldCheck, Zap, Globe, LogOut } from "lucide-react";
+import { Sparkles, ArrowLeft, ShieldCheck, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
@@ -38,7 +38,7 @@ export default function PricingPage() {
             }
         };
         getData();
-    }, []);
+    }, [supabase]);
 
     const handleUpgrade = async (tier: { id: string, name: string, priceNumeric: number }) => {
         if (!user) {
@@ -53,8 +53,8 @@ export default function PricingPage() {
 
         setLoading(tier.id);
 
-        if (typeof window !== 'undefined' && (window as any).posthog) {
-            (window as any).posthog.capture('upgrade_started', {
+        if (typeof window !== 'undefined' && 'posthog' in window) {
+            (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('upgrade_started', {
                 plan_id: tier.id,
                 amount: tier.priceNumeric
             });
@@ -82,7 +82,7 @@ export default function PricingPage() {
                 description: `${tier.name} Plan Subscription`,
                 image: "/icons/icon-192x192.png",
                 order_id: data.id,
-                handler: async function (response: any) {
+                handler: async function (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) {
                     try {
                         toast({
                             title: "Payment Captured",
