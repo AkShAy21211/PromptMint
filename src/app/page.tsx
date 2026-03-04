@@ -228,7 +228,9 @@ export default function Home() {
 
       toast({
         title: "Success",
-        description: user
+        description: isPro
+          ? "Prompt minted! (unlimited)"
+          : user
           ? `Prompt minted! (${newCount}/${MAX_FREE} used)`
           : `Prompt minted! (${newCount}/${MAX_FREE} total)`,
       });

@@ -53,18 +53,46 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
             } else {
-                const { error } = await supabase.auth.signUp({
+                // attempt to register the user with Supabase
+                const { data: signUpData, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
                 });
                 if (error) throw error;
+
+                // if the signup call returned a user object we can go ahead and
+                // create a matching profile row in our own table.  In some flows
+                // (magic link, email confirmation) `signUpData.user` may be null
+                // until the user actually verifies; that's fine, the profile will
+                // be created later on first successful sign‑in via the auth
+                // listener in `app/page.tsx`.
+                if (signUpData?.user) {
+                    try {
+                        await supabase.from('profiles').insert({
+                            id: signUpData.user.id,
+                            usage_count: 0,
+                            is_pro: false,
+                        });
+                    } catch (profileError) {
+                        // if inserting fails (for example the row already exists),
+                        // we can ignore it; it's a best‑effort step.
+                        console.warn('Failed to create profile after signup', profileError);
+                    }
+                }
             }
 
             onSuccess?.();
             onClose();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "An unexpected error occurred");
+            let message = err instanceof Error ? err.message : "An unexpected error occurred";
+            // improve guidance when someone tries to sign up with an existing
+            // account – the default Supabase message is a little terse.
+            if (!isLogin && message.toLowerCase().includes('already registered')) {
+                message =
+                    "An account with that email already exists. Try signing in instead.";
+            }
+            setError(message);
         } finally {
             setLoading(false);
         }
