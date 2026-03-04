@@ -53,8 +53,8 @@ export default function PricingPage() {
 
         setLoading(tier.id);
 
-        if (typeof window !== 'undefined' && 'posthog' in window) {
-            (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('upgrade_started', {
+        if (typeof window !== 'undefined' && window.posthog) {
+            window.posthog.capture('upgrade_started', {
                 plan_id: tier.id,
                 amount: tier.priceNumeric
             });
@@ -99,8 +99,8 @@ export default function PricingPage() {
                         });
 
                         if (verifyRes.ok) {
-                            if (typeof window !== 'undefined' && (window as any).posthog) {
-                                (window as any).posthog.capture('upgrade_verified', { plan_id: tier.id });
+                            if (typeof window !== 'undefined' && window.posthog) {
+                                window.posthog.capture('upgrade_verified', { plan_id: tier.id });
                             }
                             toast({
                                 title: "Plan Upgraded!",
@@ -109,8 +109,8 @@ export default function PricingPage() {
                             router.push("/account?sync=true");
                         } else {
                             const errorData = await verifyRes.json();
-                            if (typeof window !== 'undefined' && 'posthog' in window) {
-                                (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('upgrade_failed', { reason: 'verification_failed', plan_id: tier.id });
+                            if (typeof window !== 'undefined' && window.posthog) {
+                                window.posthog.capture('upgrade_failed', { reason: 'verification_failed', plan_id: tier.id });
                             }
                             throw new Error(errorData.error || "Verification failed");
                         }
@@ -132,10 +132,11 @@ export default function PricingPage() {
                 },
             };
 
-            const rzp = new (window as unknown as { Razorpay: new (opts: Record<string, unknown>) => { on: (event: string, cb: (r: { error: { description: string } }) => void) => void; open: () => void } }).Razorpay(options);
+            if (!window.Razorpay) throw new Error("Razorpay not loaded");
+            const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', function (response: { error: { description: string } }) {
                 if (typeof window !== 'undefined' && 'posthog' in window) {
-                    (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('upgrade_failed', { reason: 'payment_failed', plan_id: tier.id, error: response.error.description });
+                    window.posthog?.capture('upgrade_failed', { reason: 'payment_failed', plan_id: tier.id, error: response.error.description });
                 }
             });
             rzp.open();

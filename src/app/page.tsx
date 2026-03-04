@@ -118,8 +118,8 @@ export default function Home() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    if (typeof window !== 'undefined' && 'posthog' in window) {
-      (window as unknown as { posthog: { reset: () => void } }).posthog.reset();
+    if (typeof window !== 'undefined' && window.posthog) {
+      window.posthog.reset?.();
     }
     window.location.href = "/";
   };
@@ -200,8 +200,8 @@ export default function Home() {
         }
       }
 
-      if (typeof window !== 'undefined' && 'posthog' in window) {
-        (window as unknown as { posthog: { capture: (event: string, properties: unknown) => void } }).posthog.capture('prompt_minted', {
+      if (typeof window !== 'undefined' && window.posthog) {
+        window.posthog.capture('prompt_minted', {
           styling: stack.styling,
           language: stack.language,
           animation: stack.animation,

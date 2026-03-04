@@ -92,8 +92,8 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
 
         const canShare = typeof navigator !== 'undefined' && !!navigator.share;
 
-        if (typeof window !== 'undefined' && 'posthog' in window) {
-            (window as unknown as { posthog: { capture: (e: string, p: Record<string, unknown>) => void } }).posthog.capture('prompt_shared', { method: canShare ? 'native' : 'clipboard' });
+        if (typeof window !== 'undefined' && window.posthog) {
+            window.posthog.capture('prompt_shared', { method: canShare ? 'native' : 'clipboard' });
         }
 
         if (canShare) {
@@ -168,8 +168,8 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
         link.click();
         document.body.removeChild(link);
 
-        if (typeof window !== 'undefined' && 'posthog' in window) {
-            (window as unknown as { posthog: { capture: (e: string) => void } }).posthog.capture('doc_exported');
+        if (typeof window !== 'undefined' && window.posthog) {
+            window.posthog.capture('doc_exported');
         }
     };
 

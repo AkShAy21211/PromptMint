@@ -102,8 +102,8 @@ export default function AccountPage() {
                         variant="ghost"
                         onClick={async () => {
                             await supabase.auth.signOut();
-                            if (typeof window !== 'undefined' && 'posthog' in window) {
-                                (window as unknown as { posthog: { reset: () => void } }).posthog.reset();
+                            if (typeof window !== 'undefined' && window.posthog) {
+                                window.posthog.reset?.();
                             }
                             window.location.href = "/";
                         }}
