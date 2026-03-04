@@ -47,23 +47,23 @@ export function LimitModal({ isOpen, onClose, onLogin, isGuest }: LimitModalProp
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 text-lg">
                                 <div className="bg-black/40 border border-white/5 rounded-2xl p-6 flex flex-col justify-center">
-                                    <div className="text-zinc-400 font-bold mb-1 uppercase text-sm tracking-wider">Free Tier Reality</div>
+                                    <div className="text-zinc-400 font-bold mb-1 uppercase text-sm tracking-wider">Free Tier</div>
                                     <div className="text-2xl font-black text-white flex items-center gap-3">
-                                        1 feature / week <span className="opacity-50">😞</span>
+                                        5 prompts / month
                                     </div>
                                 </div>
                                 <div className="bg-gradient-to-br from-violet-600/20 to-cyan-600/20 border border-violet-500/30 rounded-2xl p-6 flex flex-col justify-center relative overflow-hidden">
                                     <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-transparent pointer-events-none" />
-                                    <div className="text-violet-300 font-bold mb-1 uppercase text-sm tracking-wider relative z-10">Pro Tier Workflow</div>
+                                    <div className="text-violet-300 font-bold mb-1 uppercase text-sm tracking-wider relative z-10">Pro Tier</div>
                                     <div className="text-2xl font-black text-white flex items-center gap-3 relative z-10">
-                                        8 features / day <span className="opacity-100">😎</span>
+                                        Unlimited prompts
                                     </div>
                                 </div>
                             </div>
 
                             <div className="bg-zinc-900/50 border-l-4 border-violet-500 p-6 rounded-r-2xl mb-12 italic text-zinc-300">
-                                &quot;Architected the core structure of 12 features in 2hrs yesterday. This tool massively accelerates my initial workflows.&quot;
-                                <div className="text-sm font-bold text-zinc-500 font-sans not-italic mt-3">— Pro User Testimonial</div>
+                                &quot;Stop going back and forth with AI tools. Get structured, stack-aware prompts that work on the first try.&quot;
+                                <div className="text-sm font-bold text-zinc-500 font-sans not-italic mt-3">— The PromptMint Team</div>
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -81,7 +81,7 @@ export function LimitModal({ isOpen, onClose, onLogin, isGuest }: LimitModalProp
                                         onClick={onLogin}
                                         className="w-full sm:w-auto h-14 px-6 text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl font-medium"
                                     >
-                                        Login to claim 5 free/mo
+                                        Login to get 5 free prompts/month
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Button>
                                 )}

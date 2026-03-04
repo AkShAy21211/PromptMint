@@ -160,7 +160,7 @@ export default function AccountPageClient() {
             <div className="space-y-4">
               <div className="flex justify-between items-end">
                 <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider">
-                  {isPro ? "Total Mintings" : "Lifetime Prompts"}
+                  {isPro ? "Total Mintings" : "Monthly Prompts"}
                 </span>
                 <div className="text-right">
                   <span className="text-2xl font-black text-foreground">
@@ -205,7 +205,7 @@ export default function AccountPageClient() {
               <span>
                 {isPro
                   ? "Unlimited Lifetime Access"
-                  : "Free Plan: 5 Total Prompts"}
+                  : "Free Plan: 5 Prompts / Month"}
               </span>
             </div>
           </motion.div>
@@ -258,7 +258,7 @@ export default function AccountPageClient() {
           <div className="flex items-center justify-center gap-6">
             <div className="w-1 h-1 bg-zinc-800 rounded-full" />
             <a
-              href="#"
+              href="mailto:support@promptmint.app"
               className="text-violet-500 text-sm font-bold hover:underline"
             >
               Contact Support

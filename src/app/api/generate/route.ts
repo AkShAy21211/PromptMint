@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 
                 if (currentCount >= LIMIT) {
                     return NextResponse.json(
-                        { error: "LIMIT_REACHED", message: "Guest monthly limit reached (5 prompts). Sign in for 5 free monthly prompts!" },
+                        { error: "LIMIT_REACHED", message: "Guest monthly limit reached (5 prompts). Sign in to get 5 free prompts per month!" },
                         { status: 403 }
                     );
                 }

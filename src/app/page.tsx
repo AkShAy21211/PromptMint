@@ -46,11 +46,9 @@ export default function Home() {
   useEffect(() => {
     const getUser = async () => {
       try {
-        console.log("[v0] Starting auth initialization...");
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        console.log("[v0] Auth getUser completed, user:", user ? "found" : "null");
         setUser(user);
 
         if (user) {
@@ -72,11 +70,10 @@ export default function Home() {
         }
       } catch (error) {
         // If Supabase fails, fall back to guest mode
-        console.error("[v0] Failed to initialize auth:", error);
+        console.error("Failed to initialize auth:", error);
         const count = localStorage.getItem("guest_prompt_count");
         setPromptCount(count ? parseInt(count) : 0);
       } finally {
-        console.log("[v0] Auth init complete, setting isInitialLoading to false");
         setIsInitialLoading(false);
       }
     };
