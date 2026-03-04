@@ -124,7 +124,7 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
         if (!isPro) {
             toast({
                 title: "Pro Feature",
-                description: "Doc Export is only available for Pro and Lifetime members.",
+                description: "Doc Export is only available for Pro members.",
                 variant: "destructive",
             });
             return;
