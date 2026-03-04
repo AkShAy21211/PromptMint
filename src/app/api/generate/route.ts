@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
                 if (profileError) throw profileError;
 
-                let currentCount = profile?.usage_count || 0;
+                const currentCount = profile?.usage_count || 0;
                 isUnlimited = !!(profile?.is_pro || profile?.plan_type === 'pro' || profile?.plan_type === 'lifetime');
 
                 const lastReset = profile?.last_reset ? new Date(profile.last_reset) : new Date(0);
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
                 const daysSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24);
 
                 let newUsageCount = currentCount + 1;
-                let updatePayload: any = { usage_count: newUsageCount };
+                let updatePayload: Record<string, unknown> = { usage_count: newUsageCount };
 
                 if (daysSinceReset >= 30 && !isUnlimited) {
                     newUsageCount = 1;
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
                         last_used: now.toISOString()
                     }, { onConflict: 'ip_hash' });
             }
-        } catch (dbError: any) {
+        } catch (dbError: unknown) {
             console.error("Supabase Resilience Activation:", dbError);
             dbDown = true; // Proceed in degraded mode
         }
@@ -154,11 +154,11 @@ export async function POST(req: NextRequest) {
                 result: text,
                 isDegraded: dbDown
             });
-        } catch (aiError: any) {
+        } catch (aiError: unknown) {
             console.error("Gemini API Error:", aiError);
 
-            // Map common AI busy/overload errors
-            if (aiError.message?.includes("503") || aiError.message?.includes("overloaded") || aiError.message?.includes("429")) {
+            const errorMessage = aiError instanceof Error ? aiError.message : String(aiError);
+            if (errorMessage.includes("503") || errorMessage.includes("overloaded") || errorMessage.includes("429")) {
                 return NextResponse.json(
                     { error: "AI_BUSY", message: "AI engines are currently busy. Please retry in a few seconds." },
                     { status: 503 }
@@ -166,14 +166,14 @@ export async function POST(req: NextRequest) {
             }
 
             return NextResponse.json(
-                { error: "GEN_FAILED", message: aiError.message || "Failed to generate content. Please try again." },
+                { error: "GEN_FAILED", message: errorMessage || "Failed to generate content. Please try again." },
                 { status: 500 }
             );
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Critical Generation Error:", error);
         return NextResponse.json(
-            { error: error.message || "An unexpected error occurred during generation." },
+            { error: error instanceof Error ? error.message : "An unexpected error occurred during generation." },
             { status: 500 }
         );
     }

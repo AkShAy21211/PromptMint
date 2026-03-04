@@ -62,7 +62,7 @@ export function LimitModal({ isOpen, onClose, onLogin, isGuest }: LimitModalProp
                             </div>
 
                             <div className="bg-zinc-900/50 border-l-4 border-violet-500 p-6 rounded-r-2xl mb-12 italic text-zinc-300">
-                                "Architected the core structure of 12 features in 2hrs yesterday. This tool massively accelerates my initial workflows."
+                                &quot;Architected the core structure of 12 features in 2hrs yesterday. This tool massively accelerates my initial workflows.&quot;
                                 <div className="text-sm font-bold text-zinc-500 font-sans not-italic mt-3">— Pro User Testimonial</div>
                             </div>
 

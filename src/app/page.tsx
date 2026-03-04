@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, RefreshCw, LogOut, User as UserIcon, Lock } from "lucide-react";
+import { Sparkles, RefreshCw, LogOut, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -74,7 +74,13 @@ export default function Home() {
       setUser(session?.user ?? null);
       if (session?.user) {
         // Fetch or create profile
-        let { data: profile, error: profileError } = await supabase
+        let { data: profile } = await supabase
+          .from('profiles')
+          .select('usage_count, is_pro, plan_type')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        const { error: profileError } = await supabase
           .from('profiles')
           .select('usage_count, is_pro, plan_type')
           .eq('id', session.user.id)
@@ -108,12 +114,12 @@ export default function Home() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    if (typeof window !== 'undefined' && (window as any).posthog) {
-      (window as any).posthog.reset();
+    if (typeof window !== 'undefined' && 'posthog' in window) {
+      (window as unknown as { posthog: { reset: () => void } }).posthog.reset();
     }
     window.location.href = "/";
   };
@@ -194,8 +200,8 @@ export default function Home() {
         }
       }
 
-      if (typeof window !== 'undefined' && (window as any).posthog) {
-        (window as any).posthog.capture('prompt_minted', {
+      if (typeof window !== 'undefined' && 'posthog' in window) {
+        (window as unknown as { posthog: { capture: (event: string, properties: unknown) => void } }).posthog.capture('prompt_minted', {
           styling: stack.styling,
           language: stack.language,
           animation: stack.animation,
@@ -358,30 +364,62 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex-[1.2] w-full bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex relative min-h-[300px]">
-            {/* Left Side (Bad) */}
-            <div className="flex-1 p-6 lg:p-8 border-r border-zinc-800 bg-black/40 flex flex-col justify-center">
-              <div className="text-zinc-500 font-bold mb-4 text-xs tracking-widest uppercase">Without PromptMint 😡</div>
-              <div className="bg-zinc-800/50 rounded-lg p-3 text-sm text-rose-300 font-mono mb-4">"build an auth system"</div>
-              <div className="space-y-3 opacity-40">
-                <div className="h-4 bg-zinc-700 rounded w-full"></div>
-                <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
-                <div className="h-4 bg-rose-900/50 rounded w-5/6"></div>
+          {/* Comparison Component */}
+          <div className="flex-[1.2] w-full bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col min-h-[300px]">
+
+            {/* Header */}
+            <div className="flex border-b border-zinc-800">
+              <div className="flex-1 px-5 py-3 border-r border-zinc-800 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                <span className="text-zinc-500 text-xs font-semibold tracking-widest uppercase">Your prompt</span>
+              </div>
+              <div className="flex-1 px-5 py-3 flex items-center gap-2 bg-violet-500/5">
+                <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+                <span className="text-violet-400 text-xs font-semibold tracking-widest uppercase flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" /> After PromptMint
+                </span>
               </div>
             </div>
-            {/* Right Side (Good) */}
-            <div className="flex-1 p-6 lg:p-8 relative bg-gradient-to-br from-violet-500/10 to-cyan-500/10 flex flex-col justify-center">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-cyan-500"></div>
-              <div className="text-violet-400 font-bold mb-4 text-xs tracking-widest uppercase flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> PromptMint 😎</div>
-              <div className="bg-violet-500/20 border border-violet-500/30 rounded-lg p-3 text-sm text-white font-mono mb-4 shadow-[0_0_20px_rgba(139,92,246,0.15)] flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></div>
-                CO-STAR Prompt
+
+            {/* Content */}
+            <div className="flex flex-1">
+
+              {/* Left — Vague Input */}
+              <div className="flex-1 p-5 border-r border-zinc-800 flex flex-col gap-4 bg-black/30">
+                <div className="bg-zinc-900 border border-zinc-700/60 rounded-xl p-3 font-mono text-sm text-rose-300">
+                  &quot;build me a dark navbar&quot;
+                </div>
+                <div className="flex flex-col gap-2">
+                  {["Framework?", "CSS approach?", "TypeScript?", "Animations?", "Responsive?"].map((q) => (
+                    <div key={q} className="flex items-center gap-2 text-xs text-zinc-600">
+                      <span className="text-rose-700 font-bold">✗</span>
+                      <span>{q}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-auto bg-rose-950/30 border border-rose-900/40 rounded-lg p-3 text-xs text-rose-400/80">
+                  AI guesses. You argue. 20 min wasted.
+                </div>
               </div>
-              <div className="space-y-3">
-                <div className="h-4 bg-emerald-500/20 rounded w-full"></div>
-                <div className="h-4 bg-emerald-500/20 rounded w-4/5"></div>
-                <div className="h-4 bg-emerald-500/20 rounded w-5/6"></div>
+
+              {/* Right — Structured Output */}
+              <div className="flex-1 p-5 flex flex-col gap-3 relative bg-gradient-to-br from-violet-500/10 to-cyan-500/5">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-violet-500 to-cyan-500"></div>
+                {[
+                  { label: "Stack", value: "Next.js + Tailwind + TS", color: "text-cyan-300" },
+                  { label: "Style", value: "Framer Motion, accessible", color: "text-violet-300" },
+                  { label: "Output", value: "Mobile-first, dark theme", color: "text-emerald-300" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 flex items-center gap-3">
+                    <span className="text-zinc-500 text-xs w-12 shrink-0">{label}</span>
+                    <span className={`text-xs font-medium ${color}`}>{value}</span>
+                  </div>
+                ))}
+                <div className="mt-auto bg-emerald-950/40 border border-emerald-800/40 rounded-lg p-3 text-xs text-emerald-400">
+                  ✓ Right output, first try. Every time.
+                </div>
               </div>
+
             </div>
           </div>
         </div>

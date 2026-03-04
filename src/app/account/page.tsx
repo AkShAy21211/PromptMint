@@ -8,8 +8,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-    User as UserIcon,
-    Zap,
     Clock,
     CreditCard,
     ArrowLeft,
@@ -22,9 +20,16 @@ import { cn } from "@/lib/utils";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 
+interface UserProfile {
+    usage_count: number;
+    plan_type: string;
+    is_pro: boolean;
+    [key: string]: unknown;
+}
+
 export default function AccountPage() {
     const [user, setUser] = useState<User | null>(null);
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -57,7 +62,7 @@ export default function AccountPage() {
             }
         };
         getData();
-    }, [searchParams]);
+    }, [searchParams, router, supabase, toast]);
 
     if (loading) {
         return (
@@ -97,8 +102,8 @@ export default function AccountPage() {
                         variant="ghost"
                         onClick={async () => {
                             await supabase.auth.signOut();
-                            if (typeof window !== 'undefined' && (window as any).posthog) {
-                                (window as any).posthog.reset();
+                            if (typeof window !== 'undefined' && 'posthog' in window) {
+                                (window as unknown as { posthog: { reset: () => void } }).posthog.reset();
                             }
                             window.location.href = "/";
                         }}

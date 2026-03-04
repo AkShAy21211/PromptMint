@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { X, Mail, Lock, Loader2, Sparkles, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -52,8 +51,8 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
 
             onSuccess?.();
             onClose();
-        } catch (err: any) {
-            setError(err.message || "An unexpected error occurred");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "An unexpected error occurred");
         } finally {
             setLoading(false);
         }

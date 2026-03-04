@@ -7,7 +7,7 @@ interface StackToggleProps {
     label: string;
     options: string[];
     selected: string;
-    onChange: (option: any) => void;
+    onChange: (option: string) => void;
 }
 
 /**
