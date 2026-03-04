@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Stack, StylingType, LanguageType, AnimationType } from "@/lib/types";
+import { Stack, StylingType, LanguageType, AnimationType, BackendType, DatabaseType } from "@/lib/types";
 import { StackToggle } from "@/components/StackToggle";
 import { PromptOutput } from "@/components/PromptOutput";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,8 @@ export default function Home() {
     styling: "shadcn/ui",
     language: "TypeScript",
     animation: "Framer Motion",
+    backend: "None",
+    database: "None",
   });
   const [result, setResult] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -233,9 +235,11 @@ export default function Home() {
 
       if (typeof window !== "undefined" && window.posthog) {
         window.posthog.capture("prompt_minted", {
-          styling: stack.styling,
-          language: stack.language,
-          animation: stack.animation,
+            styling: stack.styling,
+            language: stack.language,
+            animation: stack.animation,
+            backend: stack.backend,
+            database: stack.database,
           is_pro: isPro,
           prompt_length: userIdea.length,
         });
