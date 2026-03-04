@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { X, Mail, Lock, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { X, Mail, Lock, Loader2, Sparkles, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -12,16 +12,33 @@ interface LoginModalProps {
     onSuccess?: () => void;
 }
 
+// ✅ Extracted — reusable and testable outside the component
+const isValidEmail = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
 export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [emailTouched, setEmailTouched] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const supabase = createClient();
 
+    // ✅ Derived — no extra state needed
+    const emailError = emailTouched && email && !isValidEmail(email)
+        ? "Please enter a valid email address"
+        : null;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // ✅ Guard: block submission if email is still invalid
+        if (!isValidEmail(email)) {
+            setEmailTouched(true);
+            return;
+        }
 
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
             setError("Supabase keys are missing in .env.local!");
@@ -33,18 +50,13 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
 
         try {
             if (isLogin) {
-                const { error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                });
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
             } else {
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
-                    options: {
-                        emailRedirectTo: `${window.location.origin}/auth/callback`,
-                    },
+                    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
                 });
                 if (error) throw error;
             }
@@ -56,6 +68,13 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
         } finally {
             setLoading(false);
         }
+    };
+
+    // ✅ Reset transient state when switching modes
+    const handleToggleMode = () => {
+        setIsLogin(!isLogin);
+        setError(null);
+        setEmailTouched(false);
     };
 
     if (!isOpen) return null;
@@ -76,7 +95,6 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 className="relative w-full max-w-md overflow-hidden"
             >
-                {/* Modal Glow */}
                 <div className="absolute -inset-[1px] bg-gradient-to-br from-cyan-500 via-violet-500 to-emerald-500 rounded-[2rem] opacity-30 blur-sm" />
 
                 <div className="relative bg-card/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-8 rounded-[2rem] shadow-2xl">
@@ -102,7 +120,8 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
+                        {/* Email Field */}
+                        <div className="space-y-1">
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                                 <input
@@ -110,24 +129,48 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                                     placeholder="Email address"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-zinc-100/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                                    onBlur={() => setEmailTouched(true)}
+                                    className={`w-full bg-zinc-100/50 dark:bg-white/5 border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition-all ${
+                                        emailError
+                                            ? "border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/50"
+                                            : "border-zinc-200 dark:border-white/10 focus:border-cyan-500/50 focus:ring-cyan-500/50"
+                                    }`}
                                     required
                                 />
                             </div>
+                            {/* ✅ Inline validation message — only shown after blur */}
+                            {emailError && (
+                                <motion.p
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-xs text-rose-400 pl-1 flex items-center gap-1"
+                                >
+                                    <AlertCircle className="w-3 h-3" />
+                                    {emailError}
+                                </motion.p>
+                            )}
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-zinc-100/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
-                                    required
-                                />
-                            </div>
+                        {/* Password Field with Toggle */}
+                        <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-zinc-100/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl py-3 pl-12 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                                required
+                            />
+                            {/* ✅ Toggle button — accessible with aria-label */}
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
                         </div>
 
                         {error && (
@@ -158,7 +201,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                         <p className="text-muted-foreground text-sm">
                             {isLogin ? "Don't have an account?" : "Already have an account?"}
                             <button
-                                onClick={() => setIsLogin(!isLogin)}
+                                onClick={handleToggleMode}
                                 className="ml-2 text-cyan-500 font-bold hover:text-cyan-400 transition-colors"
                             >
                                 {isLogin ? "Join now" : "Sign in"}
@@ -166,7 +209,6 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                         </p>
                     </div>
 
-                    {/* Ambient backgrounds */}
                     <div className="absolute top-0 left-0 w-32 h-32 bg-cyan-500/10 blur-[60px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-0 right-0 w-32 h-32 bg-violet-500/10 blur-[60px] rounded-full pointer-events-none" />
                 </div>
