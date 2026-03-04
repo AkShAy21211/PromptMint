@@ -262,6 +262,12 @@ export default function PricingPage() {
           )}
         </div>
 
+        <p className="text-sm text-muted-foreground max-w-3xl mx-auto text-center mb-8">
+          Note: Free tier limits reset every 30 days. Guests and signed-in free
+          accounts both receive 5 prompts per month — guests are tracked by IP
+          (local/guest storage) while signed-in users are tracked on your account.
+        </p>
+
         {/* ROI Justification Section */}
         <section className="mt-8 mb-24 max-w-4xl mx-auto rounded-3xl bg-zinc-900 overflow-hidden border border-zinc-800 relative shadow-2xl">
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 pointer-events-none" />
@@ -343,9 +349,9 @@ export default function PricingPage() {
             <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center border border-violet-500/20">
               <Globe className="w-6 h-6 text-violet-500" />
             </div>
-            <h4 className="font-bold text-foreground">Global History</h4>
+            <h4 className="font-bold text-foreground">Global History (Pro)</h4>
             <p className="text-sm text-muted-foreground">
-              Access your prompt history from any device, anywhere.
+              Cloud-synced prompt history available to Pro subscribers; falls back to local storage when offline.
             </p>
           </div>
         </section>
