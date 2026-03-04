@@ -9,7 +9,7 @@ import { type User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { Sparkles, ArrowLeft, ShieldCheck, Zap, Globe } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
