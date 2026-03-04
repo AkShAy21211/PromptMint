@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { type User } from "@supabase/supabase-js";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -32,7 +32,6 @@ export default function AccountPage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const searchParams = useSearchParams();
     const { toast } = useToast();
     const supabase = createClient();
 
@@ -54,11 +53,15 @@ export default function AccountPage() {
             setProfile(profileData);
             setLoading(false);
 
-            if (searchParams?.get('sync')) {
-                toast({
-                    title: "Dashboard Synchronized",
-                    description: "Your plan status and usage have been updated.",
-                });
+            // React to ?sync query in client environment
+            if (typeof window !== 'undefined') {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('sync')) {
+                    toast({
+                        title: "Dashboard Synchronized",
+                        description: "Your plan status and usage have been updated.",
+                    });
+                }
             }
         };
         getData();
