@@ -54,7 +54,7 @@ export default function AccountPage() {
             setProfile(profileData);
             setLoading(false);
 
-            if (searchParams.get('sync')) {
+            if (searchParams?.get('sync')) {
                 toast({
                     title: "Dashboard Synchronized",
                     description: "Your plan status and usage have been updated.",
