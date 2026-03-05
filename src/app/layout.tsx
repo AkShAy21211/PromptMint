@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     title: "PromptMint — AI Prompt Generator for Developers",
     description: "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
   },
+  verification: {
+    google: "psXBJWyp67CAH1mV1zKdKDT8C1w6kf-XZ3lOJnFQ-Kk",
+  },
 };
 
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
