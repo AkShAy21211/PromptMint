@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { BetaBanner } from "@/components/BetaBanner";
-import { getBetaBannerConfig } from "@/lib/banner-config";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
