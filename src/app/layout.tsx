@@ -39,6 +39,7 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { PHProvider } from "@/components/providers/PostHogProvider";
+import { BugReportButton } from "@/components/BugReportButton";
 
 export default function RootLayout({
   children,
@@ -57,6 +58,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <BetaBanner enabled={true} dismissible={true} />
+          <BugReportButton />
+
           <PHProvider>
             {children}
           </PHProvider>
