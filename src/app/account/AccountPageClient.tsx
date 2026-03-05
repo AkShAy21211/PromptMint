@@ -159,9 +159,9 @@ export default function AccountPageClient() {
 
             <div className="space-y-4">
               <div className="flex justify-between items-end">
-                  <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider">
-                    {isPro ? "Total Mintings" : "Prompts This Month"}
-                  </span>
+                <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider">
+                  Prompts This Month
+                </span>
                 <div className="text-right">
                   <span className="text-2xl font-black text-foreground">
                     {profile?.usage_count ?? 0}
@@ -194,7 +194,7 @@ export default function AccountPageClient() {
               ) : (
                 <div className="py-4 px-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
                   <p className="text-emerald-500 text-xs font-bold uppercase tracking-widest">
-                    Unlimited Forever Activated
+                    ✦ Unlimited Usage This Month
                   </p>
                 </div>
               )}
@@ -204,7 +204,7 @@ export default function AccountPageClient() {
               <Clock className="w-4 h-4" />
               <span>
                 {isPro
-                  ? "Unlimited Lifetime Access"
+                  ? "Pro Plan: Unlimited prompts/month"
                   : "Free Plan: 5 prompts/month"}
               </span>
             </div>
