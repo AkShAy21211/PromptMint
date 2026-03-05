@@ -193,82 +193,89 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
                     Validated Blueprint
                 </h3>
 
-                <div className="flex items-center gap-1.5 bg-muted/30 dark:bg-zinc-900/40 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800/50 backdrop-blur-md">
-                    {/* Multi-AI Selectors */}
-                    <div className="flex items-center gap-0.5 sm:gap-1 bg-background/40 dark:bg-black/20 p-1 rounded-xl mr-1 overflow-x-auto scrollbar-none max-w-[calc(100vw-2rem)] sm:max-w-none">
-  {platforms.map((p) => (
-    <Button
-      key={p.id}
-      size="sm"
-      variant="ghost"
-      onClick={() => handleTest(p.id)}
-      className={cn(
-        "w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg transition-all relative overflow-hidden group flex-shrink-0",
-        testPlatform === p.id
-          ? "bg-gradient-to-br from-cyan-600/20 to-violet-600/20 border border-cyan-500/30"
-          : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
-      )}
-      title={`Test in ${p.name}`}
-    >
-      <span
+              <div className="flex flex-wrap items-center gap-1.5 bg-muted/30 dark:bg-zinc-900/40 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800/50 backdrop-blur-md w-full">
+
+  {/* Multi-AI Selectors */}
+  <div className="flex items-center gap-0.5 sm:gap-1 bg-background/40 dark:bg-black/20 p-1 rounded-xl overflow-x-auto scrollbar-none flex-1 min-w-0">
+    {platforms.map((p) => (
+      <Button
+        key={p.id}
+        size="sm"
+        variant="ghost"
+        onClick={() => handleTest(p.id)}
         className={cn(
-          "text-xs font-black transition-transform group-hover:scale-110",
-          p.text
+          "w-8 h-8 p-0 rounded-lg transition-all relative overflow-hidden group flex-shrink-0",
+          testPlatform === p.id
+            ? "bg-gradient-to-br from-cyan-600/20 to-violet-600/20 border border-cyan-500/30"
+            : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
         )}
+        title={`Test in ${p.name}`}
       >
-        {p.icon}
-      </span>
-      {testPlatform === p.id && (
-        <motion.div
-          layoutId="activePlatform"
-          className="absolute inset-0 bg-cyan-500/10 pointer-events-none"
-        />
+        <span className={cn("text-xs font-black transition-transform group-hover:scale-110", p.text)}>
+          {p.icon}
+        </span>
+        {testPlatform === p.id && (
+          <motion.div
+            layoutId="activePlatform"
+            className="absolute inset-0 bg-cyan-500/10 pointer-events-none"
+          />
+        )}
+      </Button>
+    ))}
+  </div>
+
+  {/* Divider + Actions — always on same row, pushed right */}
+  <div className="flex items-center gap-0.5 flex-shrink-0">
+    <div className="w-[1px] h-4 bg-border dark:bg-zinc-800 mr-0.5" />
+
+    {/* DOC */}
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleDownloadDoc}
+      className={cn(
+        "h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5",
+        !isPro && "opacity-50"
       )}
+    >
+      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+      <span className="hidden sm:inline text-[10px] font-bold">DOC</span>
     </Button>
-  ))}
+
+    {/* SHARE */}
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleShare}
+      className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
+    >
+      {shared
+        ? <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+        : <Share2 className="w-3.5 h-3.5 flex-shrink-0" />
+      }
+      <span className="hidden sm:inline text-[10px] font-bold">
+        {shared ? "COPIED" : "SHARE"}
+      </span>
+    </Button>
+
+    {/* COPY */}
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleCopy}
+      className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
+    >
+      {copied
+        ? <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+        : <Copy className="w-3.5 h-3.5 flex-shrink-0" />
+      }
+      <span className="hidden sm:inline text-[10px] font-bold">
+        {copied ? "COPIED" : "COPY"}
+      </span>
+    </Button>
+  </div>
+
 </div>
-
-                    <div className="w-[1px] h-4 bg-border dark:bg-zinc-800 mx-0.5" />
-
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleDownloadDoc}
-                        className={cn(
-                            "text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 h-9 px-3 text-[10px] font-bold flex items-center gap-2 rounded-lg",
-                            !isPro && "opacity-50"
-                        )}
-                    >
-                        <FileText className="w-3.5 h-3.5" />
-                        DOC
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleShare}
-                        className="text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 h-9 px-3 text-[10px] font-bold flex items-center gap-2 rounded-lg"
-                    >
-                        {shared ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500" />
-                        ) : (
-                            <Share2 className="w-3.5 h-3.5" />
-                        )}
-                        {shared ? "COPIED" : "SHARE"}
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopy}
-                        className="text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 h-9 px-3 text-[10px] font-bold flex items-center gap-2 rounded-lg"
-                    >
-                        {copied ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                        )}
-                        {copied ? "COPIED" : "COPY"}
-                    </Button>
-                </div>
             </div>
 
             <motion.div
