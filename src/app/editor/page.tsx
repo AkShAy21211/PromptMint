@@ -44,6 +44,79 @@ const BACKEND_ONLY_FRAMEWORKS: FrameworkType[] = [
   "Spring Boot",
   "Laravel",
 ];
+// ─── Free Tier Stack Limits ───────────────────────────────────────────────────
+
+const FREE_STACKS = {
+  framework: ["None", "React", "Next.js", "Express"] as FrameworkType[],
+  database: ["None", "MongoDB", "PostgreSQL"] as DatabaseType[],
+  apiPattern: ["None", "REST", "Server Actions"] as ApiPatternType[],
+  language: ["TypeScript", "JavaScript"] as LanguageType[],
+  styling: ["Tailwind CSS", "shadcn/ui"] as StylingType[],
+  animation: ["Framer Motion", "None"] as AnimationType[],
+};
+
+const ALL_STACKS = {
+  framework: [
+    "None",
+    "Next.js",
+    "React",
+    "Vue",
+    "Express",
+    "NestJS",
+    "FastAPI",
+    "Django",
+    "Spring Boot",
+    "Laravel",
+  ] as FrameworkType[],
+  database: [
+    "None",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "SQLite",
+    "Redis",
+    "Supabase",
+    "Prisma",
+    "Drizzle",
+  ] as DatabaseType[],
+  apiPattern: [
+    "None",
+    "REST",
+    "GraphQL",
+    "tRPC",
+    "WebSockets",
+    "Server Actions",
+  ] as ApiPatternType[],
+  language: [
+    "TypeScript",
+    "JavaScript",
+    "Swift",
+    "Kotlin",
+    "Java",
+    "Python",
+    "Go",
+    "C# (Unity)",
+  ] as LanguageType[],
+  styling: [
+    "Tailwind CSS",
+    "shadcn/ui",
+    "CSS Modules",
+    "NativeWind",
+    "SwiftUI",
+    "Jetpack Compose",
+    "Material UI",
+    "Chakra UI",
+    "Bootstrap",
+  ] as StylingType[],
+  animation: [
+    "Framer Motion",
+    "Reanimated",
+    "GSAP",
+    "Lottie",
+    "CSS Keyframes",
+    "None",
+  ] as AnimationType[],
+};
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -175,6 +248,22 @@ export default function EditorPage() {
     window.location.href = "/";
   };
 
+  const handleStackChange = <K extends keyof typeof FREE_STACKS>(
+    key: K,
+    val: string,
+  ) => {
+    const freeOptions = FREE_STACKS[key] as string[];
+    if (!isPro && !freeOptions.includes(val)) {
+      toast({
+        title: "Pro Feature",
+        description: `Unlock all ${key} options with a Pro plan.`,
+      });
+      router.push("/pricing");
+      return;
+    }
+    setStack((prev) => ({ ...prev, [key]: val }));
+  };
+
   const handleGenerate = async () => {
     if (userIdea.trim().length < 4) {
       toast({
@@ -269,20 +358,25 @@ export default function EditorPage() {
         description: isPro
           ? "Prompt minted! (unlimited)"
           : user
-          ? `Prompt minted! (${newCount}/${MAX_FREE} used)`
-          : `Prompt minted! (${newCount}/${MAX_FREE} total)`,
+            ? `Prompt minted! (${newCount}/${MAX_FREE} used)`
+            : `Prompt minted! (${newCount}/${MAX_FREE} total)`,
       });
 
       if (window.innerWidth < 1024) {
         setTimeout(() => {
-          outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          outputRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
         }, 100);
       }
     } catch (error: unknown) {
       toast({
         title: "Generation Error",
         description:
-          error instanceof Error ? error.message : "An unexpected error occurred.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -295,7 +389,6 @@ export default function EditorPage() {
   return (
     <main className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30">
       <div className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
-
         {/* Top Navigation */}
         <nav className="mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <motion.div
@@ -303,7 +396,10 @@ export default function EditorPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+            <Link
+              href="/"
+              className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+            >
               <div className="w-12 h-12 relative rounded-2xl overflow-hidden shadow-xl shadow-cyan-900/20 border border-white/10">
                 <Image
                   src="/icons/icon-192x192.png"
@@ -348,7 +444,10 @@ export default function EditorPage() {
                   <div className="h-3 w-20 bg-muted dark:bg-zinc-800 rounded-md animate-pulse" />
                 </div>
               ) : isPro ? (
-                <Link href="/account" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Link
+                  href="/account"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                   <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
                     PRO UNLIMITED
@@ -360,13 +459,17 @@ export default function EditorPage() {
                     <div
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        promptCount >= MAX_FREE ? "bg-rose-500" : "bg-emerald-500",
+                        promptCount >= MAX_FREE
+                          ? "bg-rose-500"
+                          : "bg-emerald-500",
                       )}
                     />
                     <span
                       className={cn(
                         "text-xs font-bold uppercase tracking-wider",
-                        promptCount >= MAX_FREE ? "text-rose-500" : "text-emerald-500",
+                        promptCount >= MAX_FREE
+                          ? "text-rose-500"
+                          : "text-emerald-500",
                       )}
                     >
                       {MAX_FREE - promptCount}/{MAX_FREE} PROMPTS LEFT
@@ -417,10 +520,8 @@ export default function EditorPage() {
 
         {/* Editor Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-
           {/* Left Column: Input Panel */}
           <div className="lg:sticky lg:top-12 space-y-8">
-
             {/* Step 1: Idea */}
             <div className="space-y-3">
               <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
@@ -446,27 +547,20 @@ export default function EditorPage() {
               </span>
 
               <div className="rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 divide-y divide-border dark:divide-zinc-800/50 overflow-hidden">
-
                 {/* ── Framework / Runtime ── */}
                 <div className="p-5">
                   <StackToggle
                     label="Framework"
-                    options={[
-                      "None",
-                      "Next.js",
-                      "React",
-                      "Vue",
-                      "Express",
-                      "NestJS",
-                      "FastAPI",
-                      "Django",
-                      "Spring Boot",
-                      "Laravel",
-                    ]}
+                    options={ALL_STACKS.framework}
                     selected={stack.framework ?? "None"}
-                    onChange={(val) =>
-                      setStack({ ...stack, framework: val as FrameworkType })
+                    lockedOptions={
+                      isPro
+                        ? []
+                        : ALL_STACKS.framework.filter(
+                            (o) => !FREE_STACKS.framework.includes(o),
+                          )
                     }
+                    onChange={(val) => handleStackChange("framework", val)}
                   />
                 </div>
 
@@ -474,21 +568,16 @@ export default function EditorPage() {
                 <div className="p-5">
                   <StackToggle
                     label="Database / ORM"
-                    options={[
-                      "None",
-                      "PostgreSQL",
-                      "MySQL",
-                      "MongoDB",
-                      "SQLite",
-                      "Redis",
-                      "Supabase",
-                      "Prisma",
-                      "Drizzle",
-                    ]}
+                    options={ALL_STACKS.database}
                     selected={stack.database ?? "None"}
-                    onChange={(val) =>
-                      setStack({ ...stack, database: val as DatabaseType })
+                    lockedOptions={
+                      isPro
+                        ? []
+                        : ALL_STACKS.database.filter(
+                            (o) => !FREE_STACKS.database.includes(o),
+                          )
                     }
+                    onChange={(val) => handleStackChange("database", val)}
                   />
                 </div>
 
@@ -496,11 +585,16 @@ export default function EditorPage() {
                 <div className="p-5">
                   <StackToggle
                     label="API Pattern"
-                    options={["None", "REST", "GraphQL", "tRPC", "WebSockets", "Server Actions"]}
+                    options={ALL_STACKS.apiPattern}
                     selected={stack.apiPattern ?? "None"}
-                    onChange={(val) =>
-                      setStack({ ...stack, apiPattern: val as ApiPatternType })
+                    lockedOptions={
+                      isPro
+                        ? []
+                        : ALL_STACKS.apiPattern.filter(
+                            (o) => !FREE_STACKS.apiPattern.includes(o),
+                          )
                     }
+                    onChange={(val) => handleStackChange("apiPattern", val)}
                   />
                 </div>
 
@@ -515,9 +609,16 @@ export default function EditorPage() {
                 <div className="p-5">
                   <StackToggle
                     label="Language"
-                    options={["TypeScript", "JavaScript", "Swift", "Kotlin", "Java", "Python", "Go", "C# (Unity)"]}
+                    options={ALL_STACKS.language}
                     selected={stack.language}
-                    onChange={(val) => setStack({ ...stack, language: val as LanguageType })}
+                    lockedOptions={
+                      isPro
+                        ? []
+                        : ALL_STACKS.language.filter(
+                            (o) => !FREE_STACKS.language.includes(o),
+                          )
+                    }
+                    onChange={(val) => handleStackChange("language", val)}
                   />
                 </div>
 
@@ -535,21 +636,16 @@ export default function EditorPage() {
                       <div className="p-5">
                         <StackToggle
                           label="Styling"
-                          options={[
-                            "Tailwind CSS",
-                            "shadcn/ui",
-                            "CSS Modules",
-                            "NativeWind",
-                            "SwiftUI",
-                            "Jetpack Compose",
-                            "Material UI",
-                            "Chakra UI",
-                            "Bootstrap",
-                          ]}
+                          options={ALL_STACKS.styling}
                           selected={stack.styling}
-                          onChange={(val) =>
-                            setStack({ ...stack, styling: val as StylingType })
+                          lockedOptions={
+                            isPro
+                              ? []
+                              : ALL_STACKS.styling.filter(
+                                  (o) => !FREE_STACKS.styling.includes(o),
+                                )
                           }
+                          onChange={(val) => handleStackChange("styling", val)}
                         />
                       </div>
                     </motion.div>
@@ -570,17 +666,23 @@ export default function EditorPage() {
                       <div className="p-5">
                         <StackToggle
                           label="Animation"
-                          options={["Framer Motion", "Reanimated", "GSAP", "Lottie", "CSS Keyframes", "None"]}
+                          options={ALL_STACKS.animation}
                           selected={stack.animation}
+                          lockedOptions={
+                            isPro
+                              ? []
+                              : ALL_STACKS.animation.filter(
+                                  (o) => !FREE_STACKS.animation.includes(o),
+                                )
+                          }
                           onChange={(val) =>
-                            setStack({ ...stack, animation: val as AnimationType })
+                            handleStackChange("animation", val)
                           }
                         />
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
               </div>
 
               {/* Hint when backend-only mode is active */}
@@ -593,8 +695,12 @@ export default function EditorPage() {
                     exit={{ opacity: 0, y: -4 }}
                     className="text-xs text-zinc-500 px-1"
                   >
-                    Styling and animation options are hidden — they don&apos;t apply to a server-only{" "}
-                    <span className="text-zinc-400 font-medium">{stack.framework}</span> project.
+                    Styling and animation options are hidden — they don&apos;t
+                    apply to a server-only{" "}
+                    <span className="text-zinc-400 font-medium">
+                      {stack.framework}
+                    </span>{" "}
+                    project.
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -640,7 +746,11 @@ export default function EditorPage() {
           <div ref={outputRef} className="space-y-6">
             <div className="lg:min-h-[600px] flex flex-col">
               {result || isLoading ? (
-                <PromptOutput result={result} isLoading={isLoading} isPro={isPro} />
+                <PromptOutput
+                  result={result}
+                  isLoading={isLoading}
+                  isPro={isPro}
+                />
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-card/20 dark:bg-zinc-900/20 border border-dashed border-border dark:border-zinc-800 rounded-3xl min-h-[500px]">
                   <div className="w-16 h-16 bg-violet-500/10 rounded-2xl flex items-center justify-center mb-6">
@@ -650,30 +760,53 @@ export default function EditorPage() {
                     Reduce friction with AI generation.
                   </h3>
                   <p className="text-muted-foreground max-w-sm mb-8">
-                    Type a brief idea. We use the CO-STAR framework to architect a comprehensive
-                    mega-prompt that significantly improves the structure of code generated on the first try.
+                    Type a brief idea. We use the CO-STAR framework to architect
+                    a comprehensive mega-prompt that significantly improves the
+                    structure of code generated on the first try.
                   </p>
                   <div className="grid grid-cols-2 gap-4 w-full max-w-lg text-left">
                     <div className="p-4 rounded-xl bg-card border border-border shadow-sm">
                       <h4 className="font-bold text-sm text-emerald-500 mb-1 flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                         Higher Success Rate
                       </h4>
                       <p className="text-xs text-muted-foreground">
-                        Minimize back-and-forth iteration loops by giving the AI comprehensive instructions upfront.
+                        Minimize back-and-forth iteration loops by giving the AI
+                        comprehensive instructions upfront.
                       </p>
                     </div>
                     <div className="p-4 rounded-xl bg-card border border-border shadow-sm">
                       <h4 className="font-bold text-sm text-cyan-500 mb-1 flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                         Strict Stack Alignment
                       </h4>
                       <p className="text-xs text-muted-foreground">
-                        Forces the AI to strictly respect your chosen frontend, backend, and styling stack.
+                        Forces the AI to strictly respect your chosen frontend,
+                        backend, and styling stack.
                       </p>
                     </div>
                   </div>
@@ -685,10 +818,15 @@ export default function EditorPage() {
                   setResult(entry.result);
                   setUserIdea(entry.idea);
                   if (entry.stack)
-                    setStack(entry.stack as unknown as import("@/lib/types").Stack);
+                    setStack(
+                      entry.stack as unknown as import("@/lib/types").Stack,
+                    );
 
                   setTimeout(() => {
-                    outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    outputRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
                   }, 100);
                 }}
                 user={user}
@@ -703,12 +841,25 @@ export default function EditorPage() {
       <footer className="mt-12 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
         <p>© 2026 PromptMint. All rights reserved.</p>
         <div className="flex items-center gap-6">
-          <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-          <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+          <Link
+            href="/terms"
+            className="hover:text-foreground transition-colors"
+          >
+            Terms of Service
+          </Link>
+          <Link
+            href="/privacy"
+            className="hover:text-foreground transition-colors"
+          >
+            Privacy Policy
+          </Link>
         </div>
       </footer>
 
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
       <LimitModal
         isOpen={isLimitModalOpen}
         onClose={() => setIsLimitModalOpen(false)}
