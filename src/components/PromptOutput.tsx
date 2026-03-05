@@ -195,36 +195,38 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
 
                 <div className="flex items-center gap-1.5 bg-muted/30 dark:bg-zinc-900/40 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800/50 backdrop-blur-md">
                     {/* Multi-AI Selectors */}
-                    <div className="flex items-center gap-1 bg-background/40 dark:bg-black/20 p-1 rounded-xl mr-1">
-                        {platforms.map((p) => (
-                            <Button
-                                key={p.id}
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleTest(p.id)}
-                                className={cn(
-                                    "w-9 h-9 p-0 rounded-lg transition-all relative overflow-hidden group",
-                                    testPlatform === p.id
-                                        ? "bg-gradient-to-br from-cyan-600/20 to-violet-600/20 border border-cyan-500/30"
-                                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                )}
-                                title={`Test in ${p.name}`}
-                            >
-                                <span className={cn(
-                                    "text-xs font-black transition-transform group-hover:scale-110",
-                                    p.text
-                                )}>
-                                    {p.icon}
-                                </span>
-                                {testPlatform === p.id && (
-                                    <motion.div
-                                        layoutId="activePlatform"
-                                        className="absolute inset-0 bg-cyan-500/10 pointer-events-none"
-                                    />
-                                )}
-                            </Button>
-                        ))}
-                    </div>
+                    <div className="flex items-center gap-0.5 sm:gap-1 bg-background/40 dark:bg-black/20 p-1 rounded-xl mr-1 overflow-x-auto scrollbar-none max-w-[calc(100vw-2rem)] sm:max-w-none">
+  {platforms.map((p) => (
+    <Button
+      key={p.id}
+      size="sm"
+      variant="ghost"
+      onClick={() => handleTest(p.id)}
+      className={cn(
+        "w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg transition-all relative overflow-hidden group flex-shrink-0",
+        testPlatform === p.id
+          ? "bg-gradient-to-br from-cyan-600/20 to-violet-600/20 border border-cyan-500/30"
+          : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      )}
+      title={`Test in ${p.name}`}
+    >
+      <span
+        className={cn(
+          "text-xs font-black transition-transform group-hover:scale-110",
+          p.text
+        )}
+      >
+        {p.icon}
+      </span>
+      {testPlatform === p.id && (
+        <motion.div
+          layoutId="activePlatform"
+          className="absolute inset-0 bg-cyan-500/10 pointer-events-none"
+        />
+      )}
+    </Button>
+  ))}
+</div>
 
                     <div className="w-[1px] h-4 bg-border dark:bg-zinc-800 mx-0.5" />
 
