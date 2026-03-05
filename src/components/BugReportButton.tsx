@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bug, X, ExternalLink, ChevronRight } from "lucide-react";
+import { Bug, X, ExternalLink } from "lucide-react";
 
 const BUG_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSe41jE1fXDEYEuppQrnN73IBs0TEsB-F9LlIk_bX9b6sk8DMA/viewform";
