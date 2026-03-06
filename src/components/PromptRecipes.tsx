@@ -12,11 +12,12 @@ interface PromptRecipesProps {
     onLoadRecipe: (recipe: PromptRecipe) => void;
     user?: User | null;
     isPro?: boolean;
+    refreshTrigger?: number;
 }
 
 const STORAGE_KEY = "promptmint_recipes";
 
-export function PromptRecipes({ onLoadRecipe, user, isPro }: PromptRecipesProps) {
+export function PromptRecipes({ onLoadRecipe, user, isPro, refreshTrigger }: PromptRecipesProps) {
     const [recipes, setRecipes] = useState<PromptRecipe[]>([]);
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
@@ -71,7 +72,7 @@ export function PromptRecipes({ onLoadRecipe, user, isPro }: PromptRecipesProps)
     useEffect(() => {
         fetchRecipes();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, isPro, supabase]);
+    }, [user, isPro, supabase, refreshTrigger]);
 
     const deleteRecipe = async (index: number) => {
         const recipe = recipes[index];

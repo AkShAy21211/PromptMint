@@ -1,33 +1,66 @@
 export type StylingType =
   | "Tailwind CSS"
   | "shadcn/ui"
+  | "Chakra UI"
+  | "Material UI"
+  | "Ant Design"
+  | "Mantine"
+  | "Radix UI"
+  | "Headless UI"
   | "CSS Modules"
+  | "Styled Components"
+  | "Emotion"
+  | "Stitches"
+  | "Vanilla Extract"
   | "NativeWind"
   | "SwiftUI"
   | "Jetpack Compose"
-  | "Material UI"
-  | "Chakra UI"
+  | "Flutter Material"
   | "Bootstrap"
+  | "Bulma"
+  | "Pico CSS"
+  | "CSS-in-JS"
   | "None";
 
 // ─── Language ───────────────────────────────────────────────────────────────
 export type LanguageType =
   | "TypeScript"
   | "JavaScript"
-  | "Swift"
-  | "Kotlin"
-  | "Java"
-  | "C# (Unity)"
+  | "Python"
   | "Go"
-  | "Python";
+  | "Java"
+  | "Kotlin"
+  | "Swift"
+  | "Dart"
+  | "C#"
+  | "Rust"
+  | "PHP"
+  | "Ruby"
+  | "Elixir"
+  | "Scala"
+  | "Zig"
+  | "Crystal"
+  | "Nim";
 
 // ─── Animation ──────────────────────────────────────────────────────────────
 export type AnimationType =
   | "Framer Motion"
-  | "Reanimated"
+  | "React Spring"
   | "GSAP"
+  | "Three.js"
   | "Lottie"
+  | "Remotion"
+  | "Reanimated"
+  | "Motion One"
+  | "Anime.js"
+  | "Popmotion"
   | "CSS Keyframes"
+  | "CSS Transitions"
+  | "View Transitions API"
+  | "Web Animations API"
+  | "Spline"
+  | "Rive"
+  | "LottieFiles"
   | "None";
 
 // ─── Framework / Runtime (NEW) ───────────────────────────────────────────────
@@ -36,24 +69,57 @@ export type FrameworkType =
   | "Next.js"
   | "React"
   | "Vue"
+  | "Vue 3 (Composition)"
+  | "Svelte"
+  | "SvelteKit"
+  | "Nuxt"
+  | "Gatsby"
+  | "Remix"
+  | "Astro"
+  | "Solid.js"
+  | "Qwik"
   | "Express"
   | "NestJS"
   | "FastAPI"
   | "Django"
+  | "Flask"
   | "Spring Boot"
-  | "Laravel";
+  | "Laravel"
+  | "Ruby on Rails"
+  | "Phoenix (Elixir)"
+  | "AdonisJS"
+  | "React Native"
+  | "Flutter"
+  | "SwiftUI"
+  | "Jetpack Compose"
+  | "Expo"
+  | "Electron"
+  | "Tauri"
+  | "RedwoodJS"
+  | "Blitz.js";
 
 // ─── Database / ORM (NEW) ───────────────────────────────────────────────────
 export type DatabaseType =
   | "None"
   | "PostgreSQL"
   | "MySQL"
+  | "MariaDB"
   | "MongoDB"
   | "SQLite"
   | "Redis"
   | "Supabase"
+  | "PlanetScale"
+  | "Neon"
+  | "SurrealDB"
+  | "Pinecone"
+  | "Weaviate"
+  | "Qdrant"
+  | "Cassandra"
+  | "DynamoDB"
+  | "Firebase Firestore"
   | "Prisma"
-  | "Drizzle";
+  | "Drizzle"
+  | "Convex";
 
 // ─── API Pattern (NEW) ──────────────────────────────────────────────────────
 export type ApiPatternType =
@@ -61,20 +127,41 @@ export type ApiPatternType =
   | "REST"
   | "GraphQL"
   | "tRPC"
+  | "gRPC"
   | "WebSockets"
-  | "Server Actions";
+  | "Server Actions"
+  | "Server Components"
+  | "Falcor"
+  | "OData"
+  | "SOAP"
+  | "Pub/Sub"
+  | "Kafka Streams";
 
 // ─── Goal Mode / Target Model (NEW, optional) ───────────────────────────────
 export type GoalMode =
   | "Scaffold"
   | "Production-ready"
-  | "Refactor existing code";
+  | "Refactor existing code"
+  | "Debug broken code"
+  | "Performance optimization"
+  | "Accessibility (a11y)"
+  | "SEO optimized"
+  | "Micro-optimizations"
+  | "Framework migration"
+  | "Add authentication";
 
 export type TargetModel =
   | "Claude"
   | "GPT"
   | "Perplexity"
-  | "Grok";
+  | "Grok"
+  | "Gemini"
+  | "Llama"
+  | "DeepSeek"
+  | "CodeLlama"
+  | "Cursor"
+  | "Copilot";
+
 
 // ─── Opinionated Defaults (optional) ────────────────────────────────────────
 export interface OpinionatedDefaults {

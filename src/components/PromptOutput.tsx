@@ -72,15 +72,34 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
             // clipboard failed silently
         }
 
-        // Map of platform URL structures
-        const platformUrls: Record<string, string> = {
-            claude: `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
-            chatgpt: `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`,
-            perplexity: `https://www.perplexity.ai/search?q=${encodeURIComponent(prompt)}`,
-            grok: `https://grok.com/?q=${encodeURIComponent(prompt)}`
+        const platformBaseUrls: Record<string, string> = {
+            claude: 'https://claude.ai/new',
+            chatgpt: 'https://chatgpt.com',
+            perplexity: 'https://www.perplexity.ai',
+            grok: 'https://grok.com'
         };
 
-        // Open the selected platform in a new tab
+        const MAX_URL_SAFE_LENGTH = 1800;
+        const encoded = encodeURIComponent(prompt);
+        const baseUrl = platformBaseUrls[platform];
+
+        if (encoded.length > MAX_URL_SAFE_LENGTH) {
+            toast({
+                title: "Prompt too long for direct link",
+                description: "Copied to clipboard — paste it manually on the AI's website.",
+                variant: "destructive",
+            });
+            setTimeout(() => window.open(baseUrl, "_blank"), 500);
+            return;
+        }
+
+        const platformUrls: Record<string, string> = {
+            claude: `${baseUrl}?q=${encoded}`,
+            chatgpt: `${baseUrl}/?q=${encoded}`,
+            perplexity: `https://www.perplexity.ai/search?q=${encoded}`,
+            grok: `${baseUrl}/?q=${encoded}`
+        };
+
         if (platformUrls[platform]) {
             setTimeout(() => window.open(platformUrls[platform], "_blank"), 500);
         }
@@ -185,7 +204,8 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
         document.body.removeChild(link);
     };
 
-    const tokenCount = Math.round(result.length / 4);
+    // Use 3.2 as a more accurate heuristic for technical/code-heavy content
+    const tokenCount = Math.round(result.length / 3.2);
 
     if (isLoading) {
         return (
@@ -205,100 +225,100 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
                     Validated Blueprint
                 </h3>
 
-              <div className="flex flex-wrap items-center gap-1.5 bg-muted/30 dark:bg-zinc-900/40 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800/50 backdrop-blur-md w-full">
+                <div className="flex flex-wrap items-center gap-1.5 bg-muted/30 dark:bg-zinc-900/40 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800/50 backdrop-blur-md w-full">
 
-  {/* Multi-AI Selectors */}
-  <div className="flex items-center gap-0.5 sm:gap-1 bg-background/40 dark:bg-black/20 p-1 rounded-xl overflow-x-auto scrollbar-none flex-1 min-w-0">
-    {platforms.map((p) => (
-      <Button
-        key={p.id}
-        size="sm"
-        variant="ghost"
-        onClick={() => handleTest(p.id)}
-        className={cn(
-          "w-8 h-8 p-0 rounded-lg transition-all relative overflow-hidden group flex-shrink-0",
-          testPlatform === p.id
-            ? "bg-gradient-to-br from-cyan-600/20 to-violet-600/20 border border-cyan-500/30"
-            : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
-        )}
-        title={`Test in ${p.name}`}
-      >
-        <span className={cn("text-xs font-black transition-transform group-hover:scale-110", p.text)}>
-          {p.icon}
-        </span>
-        {testPlatform === p.id && (
-          <motion.div
-            layoutId="activePlatform"
-            className="absolute inset-0 bg-cyan-500/10 pointer-events-none"
-          />
-        )}
-      </Button>
-    ))}
-  </div>
+                    {/* Multi-AI Selectors */}
+                    <div className="flex items-center gap-0.5 sm:gap-1 bg-background/40 dark:bg-black/20 p-1 rounded-xl overflow-x-auto scrollbar-none flex-1 min-w-0">
+                        {platforms.map((p) => (
+                            <Button
+                                key={p.id}
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleTest(p.id)}
+                                className={cn(
+                                    "w-8 h-8 p-0 rounded-lg transition-all relative overflow-hidden group flex-shrink-0",
+                                    testPlatform === p.id
+                                        ? "bg-gradient-to-br from-cyan-600/20 to-violet-600/20 border border-cyan-500/30"
+                                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                )}
+                                title={`Test in ${p.name}`}
+                            >
+                                <span className={cn("text-xs font-black transition-transform group-hover:scale-110", p.text)}>
+                                    {p.icon}
+                                </span>
+                                {testPlatform === p.id && (
+                                    <motion.div
+                                        layoutId="activePlatform"
+                                        className="absolute inset-0 bg-cyan-500/10 pointer-events-none"
+                                    />
+                                )}
+                            </Button>
+                        ))}
+                    </div>
 
-  {/* Divider + Actions — always on same row, pushed right */}
-  <div className="flex items-center gap-0.5 flex-shrink-0">
-    <div className="w-[1px] h-4 bg-border dark:bg-zinc-800 mr-0.5" />
+                    {/* Divider + Actions — always on same row, pushed right */}
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                        <div className="w-[1px] h-4 bg-border dark:bg-zinc-800 mr-0.5" />
 
-                {/* DOC */}
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleDownloadDoc}
-      className={cn(
-        "h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5",
-        !isPro && "opacity-50"
-      )}
-    >
-      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-      <span className="hidden sm:inline text-[10px] font-bold">DOC</span>
-    </Button>
+                        {/* DOC */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleDownloadDoc}
+                            className={cn(
+                                "h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5",
+                                !isPro && "opacity-50"
+                            )}
+                        >
+                            <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="hidden sm:inline text-[10px] font-bold">DOC</span>
+                        </Button>
 
-    {/* MD */}
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleDownloadMarkdown}
-      className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
-    >
-      <FileDown className="w-3.5 h-3.5 flex-shrink-0" />
-      <span className="hidden sm:inline text-[10px] font-bold">MD</span>
-    </Button>
+                        {/* MD */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleDownloadMarkdown}
+                            className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
+                        >
+                            <FileDown className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="hidden sm:inline text-[10px] font-bold">MD</span>
+                        </Button>
 
-    {/* SHARE */}
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleShare}
-      className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
-    >
-      {shared
-        ? <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-        : <Share2 className="w-3.5 h-3.5 flex-shrink-0" />
-      }
-      <span className="hidden sm:inline text-[10px] font-bold">
-        {shared ? "COPIED" : "SHARE"}
-      </span>
-    </Button>
+                        {/* SHARE */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleShare}
+                            className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
+                        >
+                            {shared
+                                ? <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                : <Share2 className="w-3.5 h-3.5 flex-shrink-0" />
+                            }
+                            <span className="hidden sm:inline text-[10px] font-bold">
+                                {shared ? "COPIED" : "SHARE"}
+                            </span>
+                        </Button>
 
-    {/* COPY */}
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleCopy}
-      className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
-    >
-      {copied
-        ? <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-        : <Copy className="w-3.5 h-3.5 flex-shrink-0" />
-      }
-      <span className="hidden sm:inline text-[10px] font-bold">
-        {copied ? "COPIED" : "COPY"}
-      </span>
-    </Button>
-  </div>
+                        {/* COPY */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCopy}
+                            className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
+                        >
+                            {copied
+                                ? <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                : <Copy className="w-3.5 h-3.5 flex-shrink-0" />
+                            }
+                            <span className="hidden sm:inline text-[10px] font-bold">
+                                {copied ? "COPIED" : "COPY"}
+                            </span>
+                        </Button>
+                    </div>
 
-</div>
+                </div>
             </div>
 
             <motion.div

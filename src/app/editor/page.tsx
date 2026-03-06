@@ -4,14 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Stack,
-  StylingType,
-  LanguageType,
-  AnimationType,
+  GoalMode,
+  TargetModel,
   FrameworkType,
   DatabaseType,
   ApiPatternType,
-  GoalMode,
-  TargetModel,
+  LanguageType,
+  StylingType,
+  AnimationType,
 } from "@/lib/types";
 import { StackToggle } from "@/components/StackToggle";
 import { PromptHealth } from "@/components/PromptHealth";
@@ -30,6 +30,11 @@ import { PromptHistory } from "@/components/PromptHistory";
 import { LimitModal } from "@/components/LimitModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { migrateLocalPrompts } from "@/lib/supabase/migration";
+import {
+  FREE_STACKS,
+  ALL_STACKS,
+} from "@/lib/constants";
+import { detectConflicts } from "@/lib/detectConflicts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
@@ -38,110 +43,71 @@ import { Logo } from "@/components/Logo";
 
 const MAX_FREE = 5;
 
-// Frameworks that are purely backend — when selected, animation and styling
-// are hidden since they don't apply to a server-only context.
-const BACKEND_ONLY_FRAMEWORKS: FrameworkType[] = [
-  "Express",
-  "NestJS",
-  "FastAPI",
-  "Django",
-  "Spring Boot",
-  "Laravel",
-];
-// ─── Free Tier Stack Limits ───────────────────────────────────────────────────
-
-const FREE_STACKS = {
-  framework: ["None", "React", "Next.js", "Express"] as FrameworkType[],
-  database: ["None", "MongoDB", "PostgreSQL"] as DatabaseType[],
-  apiPattern: ["None", "REST", "Server Actions"] as ApiPatternType[],
-  language: ["TypeScript", "JavaScript"] as LanguageType[],
-  styling: ["Tailwind CSS", "shadcn/ui"] as StylingType[],
-  animation: ["Framer Motion", "None"] as AnimationType[],
-};
-
-const ALL_STACKS = {
-  framework: [
-    "None",
-    "Next.js",
-    "React",
-    "Vue",
-    "Express",
-    "NestJS",
-    "FastAPI",
-    "Django",
-    "Spring Boot",
-    "Laravel",
-  ] as FrameworkType[],
-  database: [
-    "None",
-    "PostgreSQL",
-    "MySQL",
-    "MongoDB",
-    "SQLite",
-    "Redis",
-    "Supabase",
-    "Prisma",
-    "Drizzle",
-  ] as DatabaseType[],
-  apiPattern: [
-    "None",
-    "REST",
-    "GraphQL",
-    "tRPC",
-    "WebSockets",
-    "Server Actions",
-  ] as ApiPatternType[],
-  language: [
-    "TypeScript",
-    "JavaScript",
-    "Swift",
-    "Kotlin",
-    "Java",
-    "Python",
-    "Go",
-    "C# (Unity)",
-  ] as LanguageType[],
-  styling: [
-    "Tailwind CSS",
-    "shadcn/ui",
-    "CSS Modules",
-    "NativeWind",
-    "SwiftUI",
-    "Jetpack Compose",
-    "Material UI",
-    "Chakra UI",
-    "Bootstrap",
-  ] as StylingType[],
-  animation: [
-    "Framer Motion",
-    "Reanimated",
-    "GSAP",
-    "Lottie",
-    "CSS Keyframes",
-    "None",
-  ] as AnimationType[],
-};
-
 const GOAL_MODES: GoalMode[] = [
-  "Scaffold",
-  "Production-ready",
-  "Refactor existing code",
+  "Scaffold",                    // Basic structure/boilerplate
+  "Production-ready",            // Fully tested, scalable
+  "Refactor existing code",      // Optimize legacy code
+  "Debug broken code",           // Fix bugs + edge cases
+  "Performance optimization",    // Speed/memory improvements
+  "Accessibility (a11y)",        // WCAG compliant
+  "SEO optimized",               // Meta tags, SSR, structured data
+  "Micro-optimizations",         // Small perf tweaks
+  "Add authentication",          // Auth0/Supabase integration
 ];
 
 const TARGET_MODELS: TargetModel[] = [
-  "Claude",
-  "GPT",
-  "Perplexity",
-  "Grok",
+  "Claude",           // Anthropic Claude family
+  "GPT",              // OpenAI GPT-4o, o1-mini
+  "Perplexity",       // Perplexity AI
+  "Grok",             // xAI Grok
+  "Gemini",           // Google Gemini 2.0
+  "Llama",            // Meta Llama 3.1/4
+  "DeepSeek",         // DeepSeek Coder V2
+  "CodeLlama",        // Code-specific Llama
+  "Cursor",           // Cursor AI IDE
+  "Copilot",          // GitHub Copilot
 ];
 
 const ENGINEERING_DEFAULTS = [
+  // Architecture
   "Feature-based routing/folders",
-  "Use Zod for Validation",
-  "Prefer React Server Components (RSC)",
+  "App Router (Next.js 14+)",
+  "Zod schema validation everywhere",
+
+  // TypeScript
   "Strict TypeScript (No anys)",
-  "Include Jest/Vitest tests for logic",
+  "Explicit return types",
+  "Infer types where possible",
+
+  // Components & UI
+  "React Server Components (RSC) first",
+  "Shadcn/ui + Tailwind CSS",
+  "Framer Motion animations",
   "Mobile-first responsive design",
+
+  // Testing
+  "Vitest + React Testing Library",
+  "100% test coverage for logic",
+  "Error boundary tests",
+
+  // Performance
+  "Suspense + streaming",
+  "useTransition for UX",
+  "Image optimization (next/image)",
+
+  // Security
+  "Row Level Security (Supabase)",
+  "Input sanitization",
+  "CSP headers",
+
+  // DX
+  "ESLint + Prettier",
+  "Husky pre-commit hooks",
+  "TypeDoc comments",
+
+  // Deployment
+  "Vercel Edge runtime",
+  "Environment variable validation",
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -169,13 +135,11 @@ export default function EditorPage() {
   const [targetModel, setTargetModel] = useState<TargetModel>("GPT");
   const [engineeringDefaults, setEngineeringDefaults] = useState<string[]>([]);
   const [isSavingRecipe, setIsSavingRecipe] = useState(false);
+  const [recipeRefreshTrigger, setRecipeRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  // True when the selected framework is backend-only (hides frontend-specific rows)
-  const isBackendOnly =
-    !!stack.framework && BACKEND_ONLY_FRAMEWORKS.includes(stack.framework);
 
   // ─── Auth ──────────────────────────────────────────────────────────────────
 
@@ -338,9 +302,7 @@ export default function EditorPage() {
         description: `'${name}' has been added to your recipes.`,
       });
 
-      // trigger refresh by updating promptCount slightly hacky but works for now to re-render children if needed or we let PromptRecipes handle its own fetch via a trigger.
-      setPromptCount(prev => prev); // This doesn't actually trigger PromptRecipes refresh as it's not passed as a prop currently. We will reload page or just let user refresh for now. Easiest is to add a refresh Trigger to PromptRecipes.
-      // Better approach: Since PromptRecipes is a child, we could pass a refreshTrigger to it. Let's add that.
+      setRecipeRefreshTrigger(prev => prev + 1);
 
     } catch (error) {
       toast({
@@ -394,7 +356,6 @@ export default function EditorPage() {
       }
 
       const generatedResult = data.result;
-      setResult(generatedResult);
 
       if (generatedResult.startsWith("ERROR:")) {
         toast({
@@ -404,6 +365,8 @@ export default function EditorPage() {
         });
         return;
       }
+
+      setResult(generatedResult);
 
       const newCount = promptCount + 1;
       setPromptCount(newCount);
@@ -633,9 +596,9 @@ export default function EditorPage() {
                     lockedOptions={
                       isPro
                         ? []
-                        : ALL_STACKS.framework.filter(
-                          (o) => !FREE_STACKS.framework.includes(o),
-                        )
+                        : ALL_STACKS.framework
+                          .filter((o) => !FREE_STACKS.framework.includes(o.name as FrameworkType))
+                          .map((o) => o.name)
                     }
                     onChange={(val) => handleStackChange("framework", val)}
                   />
@@ -650,9 +613,9 @@ export default function EditorPage() {
                     lockedOptions={
                       isPro
                         ? []
-                        : ALL_STACKS.database.filter(
-                          (o) => !FREE_STACKS.database.includes(o),
-                        )
+                        : ALL_STACKS.database
+                          .filter((o) => !FREE_STACKS.database.includes(o.name as DatabaseType))
+                          .map((o) => o.name)
                     }
                     onChange={(val) => handleStackChange("database", val)}
                   />
@@ -667,9 +630,9 @@ export default function EditorPage() {
                     lockedOptions={
                       isPro
                         ? []
-                        : ALL_STACKS.apiPattern.filter(
-                          (o) => !FREE_STACKS.apiPattern.includes(o),
-                        )
+                        : ALL_STACKS.apiPattern
+                          .filter((o) => !FREE_STACKS.apiPattern.includes(o.name as ApiPatternType))
+                          .map((o) => o.name)
                     }
                     onChange={(val) => handleStackChange("apiPattern", val)}
                   />
@@ -691,96 +654,51 @@ export default function EditorPage() {
                     lockedOptions={
                       isPro
                         ? []
-                        : ALL_STACKS.language.filter(
-                          (o) => !FREE_STACKS.language.includes(o),
-                        )
+                        : ALL_STACKS.language
+                          .filter((o) => !FREE_STACKS.language.includes(o.name as LanguageType))
+                          .map((o) => o.name)
                     }
                     onChange={(val) => handleStackChange("language", val)}
                   />
                 </div>
 
-                {/* ── Styling — hidden for backend-only frameworks ── */}
-                <AnimatePresence>
-                  {!isBackendOnly && (
-                    <motion.div
-                      key="styling-row"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-5">
-                        <StackToggle
-                          label="Styling"
-                          options={ALL_STACKS.styling}
-                          selected={stack.styling}
-                          lockedOptions={
-                            isPro
-                              ? []
-                              : ALL_STACKS.styling.filter(
-                                (o) => !FREE_STACKS.styling.includes(o),
-                              )
-                          }
-                          onChange={(val) => handleStackChange("styling", val)}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* ── Styling ── */}
+                <div className="p-5">
+                  <StackToggle
+                    label="Styling"
+                    options={ALL_STACKS.styling}
+                    selected={stack.styling}
+                    lockedOptions={
+                      isPro
+                        ? []
+                        : ALL_STACKS.styling
+                          .filter((o) => !FREE_STACKS.styling.includes(o.name as StylingType))
+                          .map((o) => o.name)
+                    }
+                    onChange={(val) => handleStackChange("styling", val)}
+                  />
+                </div>
 
-                {/* ── Animation — hidden for backend-only frameworks ── */}
-                <AnimatePresence>
-                  {!isBackendOnly && (
-                    <motion.div
-                      key="animation-row"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-5">
-                        <StackToggle
-                          label="Animation"
-                          options={ALL_STACKS.animation}
-                          selected={stack.animation}
-                          lockedOptions={
-                            isPro
-                              ? []
-                              : ALL_STACKS.animation.filter(
-                                (o) => !FREE_STACKS.animation.includes(o),
-                              )
-                          }
-                          onChange={(val) =>
-                            handleStackChange("animation", val)
-                          }
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* ── Animation ── */}
+                <div className="p-5">
+                  <StackToggle
+                    label="Animation"
+                    options={ALL_STACKS.animation}
+                    selected={stack.animation}
+                    lockedOptions={
+                      isPro
+                        ? []
+                        : ALL_STACKS.animation
+                          .filter((o) => !FREE_STACKS.animation.includes(o.name as AnimationType))
+                          .map((o) => o.name)
+                    }
+                    onChange={(val) =>
+                      handleStackChange("animation", val)
+                    }
+                  />
+                </div>
               </div>
 
-              {/* Hint when backend-only mode is active */}
-              <AnimatePresence>
-                {isBackendOnly && (
-                  <motion.p
-                    key="backend-hint"
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="text-xs text-zinc-500 px-1"
-                  >
-                    Styling and animation options are hidden — they don&apos;t
-                    apply to a server-only{" "}
-                    <span className="text-zinc-400 font-medium">
-                      {stack.framework}
-                    </span>{" "}
-                    project.
-                  </motion.p>
-                )}
-              </AnimatePresence>
             </div>
 
             {/* Step 3: Goal & Target Model */}
@@ -865,7 +783,7 @@ export default function EditorPage() {
                           );
                         }}
                         className={cn(
-                          "px-3 py-1.5 rounded-full text-[10px] font-medium border transition-colors flex items-center gap-1.5",
+                          "px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors flex items-center gap-1.5",
                           isSelected
                             ? "bg-emerald-600/10 border-emerald-500/60 text-emerald-500"
                             : "bg-background border-border text-muted-foreground hover:border-emerald-500/40 hover:text-emerald-400",
@@ -890,7 +808,12 @@ export default function EditorPage() {
                 size="lg"
                 disabled={isLoading}
                 onClick={handleGenerate}
-                className="w-full h-16 bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold text-xl rounded-2xl shadow-2xl shadow-cyan-900/20 transition-all active:scale-[0.98] border border-white/10 disabled:opacity-50"
+                className={cn(
+                  "w-full h-16 text-white font-bold text-xl rounded-2xl shadow-2xl transition-all active:scale-[0.98] border border-white/10 disabled:opacity-50",
+                  detectConflicts(userIdea, stack).length > 0
+                    ? "bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 shadow-amber-900/20"
+                    : "bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 shadow-cyan-900/20"
+                )}
               >
                 {isLoading ? (
                   <RefreshCw className="mr-3 h-6 w-6 animate-spin" />
@@ -1029,6 +952,7 @@ export default function EditorPage() {
               <PromptRecipes
                 user={user}
                 isPro={isPro}
+                refreshTrigger={recipeRefreshTrigger}
                 onLoadRecipe={(recipe) => {
                   if (recipe.idea_hint) setUserIdea(recipe.idea_hint);
                   if (recipe.stack) setStack(recipe.stack);

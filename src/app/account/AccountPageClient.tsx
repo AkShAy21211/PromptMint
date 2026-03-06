@@ -120,7 +120,7 @@ export default function AccountPageClient() {
           <div className="flex items-center gap-4">
 
             <ThemeToggle />
-            <Link href="/">
+            <Link href="/editor">
               <Button
                 variant="ghost"
                 className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"

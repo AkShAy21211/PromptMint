@@ -394,7 +394,7 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger = 0 }: Pr
                                                 </div>
 
                                                 {/* Result preview */}
-                                                <div className="bg-muted/20 rounded-lg p-3 max-h-32 overflow-y-auto">
+                                                <div className="bg-muted/20 rounded-lg p-3 max-h-32 overflow-y-auto custom-scrollbar">
                                                     <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">
                                                         {entry.result}
                                                     </pre>

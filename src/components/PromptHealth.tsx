@@ -1,6 +1,7 @@
-import { AlertCircle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { AlertCircle, CheckCircle2, ShieldAlert, Zap } from "lucide-react";
 import { Stack } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { detectConflicts } from "@/lib/detectConflicts";
 
 interface PromptHealthProps {
     userIdea: string;
@@ -8,7 +9,16 @@ interface PromptHealthProps {
 }
 
 export function PromptHealth({ userIdea, stack }: PromptHealthProps) {
-    const hints: { type: "error" | "warning" | "success"; text: string }[] = [];
+    const hints: { type: "error" | "warning" | "success" | "conflict"; text: string }[] = [];
+
+    // 0. Check Conflicts (STRICT)
+    const conflicts = detectConflicts(userIdea, stack);
+    conflicts.forEach(conflict => {
+        hints.push({
+            type: "conflict",
+            text: `Conflict: Your idea mentions "${conflict.foundInText}", but you have "${conflict.selected}" selected. ${conflict.selected} will take precedence.`,
+        });
+    });
 
     // 1. Check length
     if (userIdea.trim().length === 0) {
@@ -59,12 +69,15 @@ export function PromptHealth({ userIdea, stack }: PromptHealthProps) {
                         hint.type === "warning" &&
                         "bg-amber-500/10 border-amber-500/20 text-amber-500",
                         hint.type === "success" &&
-                        "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                        "bg-emerald-500/10 border-emerald-500/20 text-emerald-500",
+                        hint.type === "conflict" &&
+                        "bg-violet-500/10 border-violet-500/20 text-violet-500 animate-pulse"
                     )}
                 >
                     {hint.type === "error" && <ShieldAlert className="w-3.5 h-3.5 shrink-0" />}
                     {hint.type === "warning" && <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
                     {hint.type === "success" && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
+                    {hint.type === "conflict" && <Zap className="w-3.5 h-3.5 shrink-0" />}
                     <span>{hint.text}</span>
                 </div>
             ))}

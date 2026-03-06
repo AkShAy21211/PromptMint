@@ -3,313 +3,206 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { buildSystemPrompt } from "@/lib/buildSystemPrompt";
 import { Stack, GoalMode, TargetModel } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { FREE_STACKS, ALL_STACKS } from "@/lib/constants";
+import { createHash } from "crypto";
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel(
-  { model: "gemini-2.5-flash" },
-  { apiVersion: "v1" }
-);
+const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
 export async function POST(req: NextRequest) {
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    // Extract IP for guest tracking
-    const forwarded = req.headers.get("x-forwarded-for");
-    const ip = forwarded ? forwarded.split(/, /)[0] : "127.0.0.1";
-
-    const {
-      userIdea,
-      stack,
-      goalMode,
-      targetModel,
-      engineeringDefaults,
-    }: {
-      userIdea: string;
-      stack: Stack;
-      goalMode?: GoalMode;
-      targetModel?: TargetModel;
-      engineeringDefaults?: string[];
-    } = await req.json();
-
-    // ── Input Validation ────────────────────────────────────────────────────
-
-    if (!userIdea || userIdea.trim().length < 5) {
-      return NextResponse.json(
-        {
-          error: "INVALID_PROMPT",
-          message:
-            "Please provide a more descriptive idea (at least 5 characters).",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!stack) {
-      return NextResponse.json(
-        { error: "Missing stack in request body" },
-        { status: 400 }
-      );
-    }
-
-    // Validate that new optional fields are known values if provided.
-    // This prevents arbitrary strings from being injected into the system prompt.
-    const VALID_FRAMEWORKS = [
-      "None", "Next.js", "React", "Vue", "Express",
-      "NestJS", "FastAPI", "Django", "Spring Boot", "Laravel",
-    ];
-    const VALID_DATABASES = [
-      "None", "PostgreSQL", "MySQL", "MongoDB", "SQLite",
-      "Redis", "Supabase", "Prisma", "Drizzle",
-    ];
-    const VALID_API_PATTERNS = [
-      "None", "REST", "GraphQL", "tRPC", "WebSockets", "Server Actions",
-    ];
-
-    if (stack.framework && !VALID_FRAMEWORKS.includes(stack.framework)) {
-      return NextResponse.json(
-        { error: "INVALID_STACK", message: "Invalid framework selection." },
-        { status: 400 }
-      );
-    }
-    if (stack.database && !VALID_DATABASES.includes(stack.database)) {
-      return NextResponse.json(
-        { error: "INVALID_STACK", message: "Invalid database selection." },
-        { status: 400 }
-      );
-    }
-    if (stack.apiPattern && !VALID_API_PATTERNS.includes(stack.apiPattern)) {
-      return NextResponse.json(
-        { error: "INVALID_STACK", message: "Invalid API pattern selection." },
-        { status: 400 }
-      );
-    }
-
-    // Validate optional goalMode / targetModel if provided
-    const VALID_GOAL_MODES: GoalMode[] = [
-      "Scaffold",
-      "Production-ready",
-      "Refactor existing code",
-    ];
-    const VALID_TARGET_MODELS: TargetModel[] = [
-      "Claude",
-      "GPT",
-      "Perplexity",
-      "Grok",
-    ];
-
-    if (goalMode && !VALID_GOAL_MODES.includes(goalMode)) {
-      return NextResponse.json(
-        { error: "INVALID_OPTION", message: "Invalid goal mode selection." },
-        { status: 400 },
-      );
-    }
-
-    if (targetModel && !VALID_TARGET_MODELS.includes(targetModel)) {
-      return NextResponse.json(
-        { error: "INVALID_OPTION", message: "Invalid target model selection." },
-        { status: 400 },
-      );
-    }
-
-    if (engineeringDefaults && !Array.isArray(engineeringDefaults)) {
-      return NextResponse.json(
-        { error: "INVALID_OPTION", message: "Engineering defaults must be an array." },
-        { status: 400 },
-      );
-    }
-
-    // ── Usage Limit Logic (Resilient) ───────────────────────────────────────
-
-    let isUnlimited = false;
-    let dbDown = false;
-    const LIMIT = 5;
-
     try {
-      if (user) {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("usage_count, is_pro, last_reset, plan_type")
-          .eq("id", user.id)
-          .single();
+        const supabase = createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
 
-        if (profileError) throw profileError;
+        // Extract IP for guest tracking
+        const forwarded = req.headers.get("x-forwarded-for");
+        const ip = forwarded ? forwarded.split(/, /)[0] : "127.0.0.1";
+        const ip_hash = createHash("sha256").update(ip).digest("hex");
 
-        const currentCount = profile?.usage_count || 0;
-        isUnlimited = !!(
-          profile?.is_pro ||
-          profile?.plan_type === "pro"
-        );
+        const {
+            userIdea,
+            stack,
+            goalMode,
+            targetModel,
+            engineeringDefaults,
+        }: {
+            userIdea: string;
+            stack: Stack;
+            goalMode?: GoalMode;
+            targetModel?: TargetModel;
+            engineeringDefaults?: string[];
+        } = await req.json();
 
-        const lastReset = profile?.last_reset
-          ? new Date(profile.last_reset)
-          : new Date(0);
-        const now = new Date();
-        const daysSinceReset =
-          (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24);
+        // ── Input Validation ────────────────────────────────────────────────────
 
-        let newUsageCount = currentCount + 1;
-        let updatePayload: Record<string, unknown> = {
-          usage_count: newUsageCount,
-        };
-
-        if (daysSinceReset >= 30 && !isUnlimited) {
-          newUsageCount = 1;
-          updatePayload = {
-            usage_count: 1,
-            last_reset: now.toISOString(),
-          };
+        if (!userIdea || userIdea.trim().length < 5) {
+            return NextResponse.json(
+                {
+                    error: "INVALID_PROMPT",
+                    message:
+                        "Please provide a more descriptive idea (at least 5 characters).",
+                },
+                { status: 400 }
+            );
         }
 
-        if (
-          profile &&
-          !isUnlimited &&
-          (daysSinceReset >= 30 ? 0 : currentCount) >= LIMIT
-        ) {
-          return NextResponse.json(
-            {
-              error: "LIMIT_REACHED",
-              message:
-                "Monthly free limit reached (5 prompts). Upgrade to Pro for unlimited access!",
-            },
-            { status: 403 }
-          );
+        if (!stack) {
+            return NextResponse.json(
+                { error: "Missing stack in request body" },
+                { status: 400 }
+            );
         }
 
-        await supabase
-          .from("profiles")
-          .update(updatePayload)
-          .eq("id", user.id);
-      } else {
-        const { data: guestUsage, error: guestError } = await supabase
-          .from("guest_usage")
-          .select("usage_count, last_used")
-          .eq("ip_hash", ip)
-          .single();
+        // Map ALL_STACKS (objects) to name strings for validation
+        const VALID_FRAMEWORKS = ALL_STACKS.framework.map(o => o.name);
+        const VALID_DATABASES = ALL_STACKS.database.map(o => o.name);
+        const VALID_API_PATTERNS = ALL_STACKS.apiPattern.map(o => o.name);
+        const VALID_LANGUAGES = ALL_STACKS.language.map(o => o.name);
+        const VALID_STYLING = ALL_STACKS.styling.map(o => o.name);
+        const VALID_ANIMATION = ALL_STACKS.animation.map(o => o.name);
 
-        if (guestError && guestError.code !== "PGRST116") throw guestError;
-
-        let currentCount = guestUsage?.usage_count || 0;
-        const lastUsed = guestUsage?.last_used
-          ? new Date(guestUsage.last_used)
-          : new Date(0);
-        const now = new Date();
-        const daysSinceUsed =
-          (now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60 * 24);
-
-        if (daysSinceUsed >= 30) {
-          currentCount = 0;
+        if (stack.framework && !VALID_FRAMEWORKS.includes(stack.framework)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid framework selection." },
+                { status: 400 }
+            );
+        }
+        if (stack.database && !VALID_DATABASES.includes(stack.database)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid database selection." },
+                { status: 400 }
+            );
+        }
+        if (stack.apiPattern && !VALID_API_PATTERNS.includes(stack.apiPattern)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid API pattern selection." },
+                { status: 400 }
+            );
+        }
+        if (stack.language && !VALID_LANGUAGES.includes(stack.language)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid language selection." },
+                { status: 400 }
+            );
+        }
+        if (stack.styling && !VALID_STYLING.includes(stack.styling)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid styling selection." },
+                { status: 400 }
+            );
+        }
+        if (stack.animation && !VALID_ANIMATION.includes(stack.animation)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid animation selection." },
+                { status: 400 }
+            );
         }
 
-        if (currentCount >= LIMIT) {
-          return NextResponse.json(
-            {
-              error: "LIMIT_REACHED",
-              message:
-                "Guest monthly limit reached (5 prompts). Sign in for 5 free monthly prompts!",
-            },
-            { status: 403 }
-          );
-        }
+        // ── Usage Limit & Pro Validation ────────────────────────────────────────
 
-        await supabase.from("guest_usage").upsert(
-          {
-            ip_hash: ip,
-            usage_count: currentCount + 1,
-            last_used: now.toISOString(),
-          },
-          { onConflict: "ip_hash" }
-        );
-      }
-    } catch (dbError: unknown) {
-      console.error("Supabase Resilience Activation:", dbError);
-      dbDown = true; // Proceed in degraded mode
-    }
+        let isUnlimited = false;
+        let dbDown = false;
+        const LIMIT = 5;
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: "GEMINI_API_KEY is not configured" },
-        { status: 500 }
-      );
-    }
-
-    // ── Generate ────────────────────────────────────────────────────────────
-
-    const systemPrompt = buildSystemPrompt(userIdea, stack, {
-      goalMode,
-      targetModel,
-      engineeringDefaults,
-    });
-
-    try {
-      const result = await model.generateContent(systemPrompt);
-      const response = await result.response;
-      const text = response.text();
-
-      // Save to prompts table for Pro/Lifetime users when DB is available.
-      // The full stack object (including new fields) is persisted here — no
-      // schema changes needed as long as the `stack` column is JSONB.
-      if (user && isUnlimited && !dbDown) {
         try {
-          await supabase.from("prompts").insert({
-            user_id: user.id,
-            title: userIdea,
-            content: text,
-            stack: stack, // includes framework, database, apiPattern if set
-          });
-        } catch (saveError) {
-          console.error("Failed to save prompt to DB (Silent Failure):", saveError);
+            let profile = null;
+            if (user) {
+                const { data } = await supabase
+                    .from("profiles")
+                    .select("usage_count, is_pro, last_reset, plan_type")
+                    .eq("id", user.id)
+                    .single();
+                profile = data;
+            }
+
+            isUnlimited = !!(profile?.is_pro || profile?.plan_type === "pro");
+
+            // Shared validation for Pro features (Free users & Guests)
+            if (!isUnlimited) {
+                const isInvalidFramework = stack.framework && !FREE_STACKS.framework.includes(stack.framework);
+                const isInvalidDatabase = stack.database && !FREE_STACKS.database.includes(stack.database);
+                const isInvalidApi = stack.apiPattern && !FREE_STACKS.apiPattern.includes(stack.apiPattern);
+                const isInvalidLanguage = stack.language && !FREE_STACKS.language.includes(stack.language);
+                const isInvalidStyling = stack.styling && !FREE_STACKS.styling.includes(stack.styling);
+                const isInvalidAnimation = stack.animation && !FREE_STACKS.animation.includes(stack.animation);
+
+                if (isInvalidFramework || isInvalidDatabase || isInvalidApi || isInvalidLanguage || isInvalidStyling || isInvalidAnimation) {
+                    return NextResponse.json(
+                        { error: "PRO_REQUIRED", message: "One or more selected technologies require a Pro plan." },
+                        { status: 403 }
+                    );
+                }
+            }
+
+            // Track usage
+            if (user) {
+                const currentCount = profile?.usage_count || 0;
+                if (!isUnlimited && currentCount >= LIMIT) {
+                    return NextResponse.json(
+                        { error: "LIMIT_REACHED", message: "Monthly free limit reached. Upgrade for more!" },
+                        { status: 403 }
+                    );
+                }
+                await supabase.from("profiles").update({ usage_count: currentCount + 1 }).eq("id", user.id);
+            } else {
+                // Guest tracking using ip_hash
+                const { data: guestUsage } = await supabase.from("guest_usage").select("usage_count").eq("ip_hash", ip_hash).single();
+                const guestCount = guestUsage?.usage_count || 0;
+                if (guestCount >= LIMIT) {
+                    return NextResponse.json(
+                        { error: "LIMIT_REACHED", message: "Guest limit reached. Sign in for more!" },
+                        { status: 403 }
+                    );
+                }
+                await supabase.from("guest_usage").upsert({ ip_hash: ip_hash, usage_count: guestCount + 1, last_used: new Date().toISOString() });
+            }
+        } catch (err) {
+            console.error("DB Resilience Mode:", err);
+            dbDown = true;
         }
-      }
 
-      return NextResponse.json({
-        result: text,
-        isDegraded: dbDown,
-      });
-    } catch (aiError: unknown) {
-      console.error("Gemini API Error:", aiError);
+        // ── Generate ────────────────────────────────────────────────────────────
 
-      const errorMessage =
-        aiError instanceof Error ? aiError.message : String(aiError);
+        const systemPrompt = buildSystemPrompt(userIdea, stack, {
+            goalMode,
+            targetModel,
+            engineeringDefaults,
+        });
 
-      if (
-        errorMessage.includes("503") ||
-        errorMessage.includes("overloaded") ||
-        errorMessage.includes("429")
-      ) {
+        const result = await model.generateContent(systemPrompt);
+        const text = result.response.text();
+
+        // ── Persistence ─────────────────────────────────────────────────────────
+        let historySaved = false;
+        if (user && isUnlimited && !dbDown) {
+            try {
+                const { error: saveError } = await supabase.from("prompts").insert({
+                    user_id: user.id,
+                    title: userIdea,
+                    content: text,
+                    stack: stack,
+                });
+                if (!saveError) historySaved = true;
+            } catch (e) {
+                console.error("Pro History Save Failed:", e);
+            }
+        }
+
+        return NextResponse.json({
+            result: text,
+            isDegraded: dbDown,
+            historySaved: (user && isUnlimited) ? historySaved : undefined
+        });
+
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Internal server error";
+        console.error("Critical Error:", error);
         return NextResponse.json(
-          {
-            error: "AI_BUSY",
-            message:
-              "AI engines are currently busy. Please retry in a few seconds.",
-          },
-          { status: 503 }
+            { error: errorMessage },
+            { status: 500 }
         );
-      }
-
-      return NextResponse.json(
-        {
-          error: "GEN_FAILED",
-          message:
-            errorMessage || "Failed to generate content. Please try again.",
-        },
-        { status: 500 }
-      );
     }
-  } catch (error: unknown) {
-    console.error("Critical Generation Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred during generation.",
-      },
-      { status: 500 }
-    );
-  }
 }
