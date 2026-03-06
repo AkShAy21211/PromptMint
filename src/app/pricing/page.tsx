@@ -13,7 +13,6 @@ import { ArrowLeft, ShieldCheck, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function PricingPage() {
   const [user, setUser] = useState<User | null>(null);
