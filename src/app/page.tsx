@@ -401,7 +401,7 @@ export default function LandingPage() {
               Stop re-prompting. Start shipping.
             </h2>
             <p className="text-muted-foreground text-sm max-w-sm">
-              5 free prompts, no credit card. Upgrade to Pro for ₹499/month — unlimited prompts, cloud sync, and .doc export.
+              5 free prompts, no credit card. Upgrade to Pro for ₹149/month — unlimited prompts, cloud sync, and .doc export.
             </p>
           </div>
           <Button
