@@ -12,4 +12,5 @@ export function createClient() {
         supabaseUrl || '',
         supabaseAnonKey || ''
     )
+
 }
