@@ -204,7 +204,7 @@ export default function PricingPage() {
                 Back to Editor
               </Button>
             </Link>
-          
+
           </div>
         </nav>
 
@@ -245,7 +245,7 @@ export default function PricingPage() {
             }) => (
               <PricingCard
                 key={tier.id}
-                tier={tier.name as "Free" | "Pro" | "Lifetime"}
+                tier={tier.name as "Free" | "Pro"}
                 price={tier.price}
                 description={tier.description}
                 features={tier.features}
@@ -357,6 +357,7 @@ export default function PricingPage() {
         <footer className="mt-4 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
           <p>© 2026 PromptMint. All rights reserved.</p>
           <div className="flex items-center gap-6">
+            <a href="mailto:nimbact@gmail.com" className="hover:text-foreground transition-colors">Support</a>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>

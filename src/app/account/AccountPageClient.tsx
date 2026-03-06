@@ -13,10 +13,11 @@ import {
   ArrowLeft,
   LogOut,
   Sparkles,
-  BarChart3,
-  Save,
   Shield,
   BookOpen,
+  MessageCircle,
+  BarChart3,
+  Save,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
@@ -347,10 +348,32 @@ export default function AccountPageClient() {
           </div>
         </section>
 
+        {/* Help & Support Section */}
+        <section className="bg-card/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border dark:border-white/5 p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-8 mb-12 group hover:border-emerald-500/30 transition-all">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-500 group-hover:scale-110 transition-transform">
+              <MessageCircle className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-black">Need Help?</h3>
+              <p className="text-muted-foreground font-medium">Have a question or found a bug? We&apos;re here to help.</p>
+            </div>
+          </div>
+          <Button
+            asChild
+            className="rounded-2xl bg-foreground text-background hover:opacity-90 font-bold px-8 h-12 shrink-0"
+          >
+            <a href="mailto:nimbact@gmail.com">
+              Contact {isPro ? 'Priority' : 'Standard'} Support
+            </a>
+          </Button>
+        </section>
+
         {/* Support Section */}
         <footer className="mt-4 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
           <p>© 2026 PromptMint. All rights reserved.</p>
           <div className="flex items-center gap-6">
+            <a href="mailto:nimbact@gmail.com" className="hover:text-foreground transition-colors">Support</a>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>

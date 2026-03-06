@@ -169,7 +169,6 @@ export default function EditorPage() {
   const [targetModel, setTargetModel] = useState<TargetModel>("GPT");
   const [engineeringDefaults, setEngineeringDefaults] = useState<string[]>([]);
   const [isSavingRecipe, setIsSavingRecipe] = useState(false);
-  const [planType, setPlanType] = useState<string>("free");
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -243,7 +242,6 @@ export default function EditorPage() {
 
           if (profile) {
             setPromptCount(profile.usage_count);
-            setPlanType(profile.plan_type || "free");
             const unlimited =
               profile.is_pro ||
               profile.plan_type === "pro";
@@ -1051,6 +1049,7 @@ export default function EditorPage() {
       <footer className="mt-4 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
         <p>© 2026 PromptMint. All rights reserved.</p>
         <div className="flex items-center gap-6">
+          <a href="mailto:nimbact@gmail.com" className="hover:text-foreground transition-colors">Support</a>
           <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
           <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
           <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
