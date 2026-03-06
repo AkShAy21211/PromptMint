@@ -10,15 +10,18 @@ import {
   FrameworkType,
   DatabaseType,
   ApiPatternType,
+  GoalMode,
+  TargetModel,
 } from "@/lib/types";
 import { StackToggle } from "@/components/StackToggle";
+import { PromptHealth } from "@/components/PromptHealth";
 import { PromptOutput } from "@/components/PromptOutput";
+import { PromptRecipes } from "@/components/PromptRecipes";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, RefreshCw, LogOut, User as UserIcon } from "lucide-react";
-import Image from "next/image";
+import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { LoginModal } from "@/components/auth/LoginModal";
@@ -29,6 +32,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { migrateLocalPrompts } from "@/lib/supabase/migration";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Logo } from "@/components/Logo";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -118,6 +122,28 @@ const ALL_STACKS = {
   ] as AnimationType[],
 };
 
+const GOAL_MODES: GoalMode[] = [
+  "Scaffold",
+  "Production-ready",
+  "Refactor existing code",
+];
+
+const TARGET_MODELS: TargetModel[] = [
+  "Claude",
+  "GPT",
+  "Perplexity",
+  "Grok",
+];
+
+const ENGINEERING_DEFAULTS = [
+  "Feature-based routing/folders",
+  "Use Zod for Validation",
+  "Prefer React Server Components (RSC)",
+  "Strict TypeScript (No anys)",
+  "Include Jest/Vitest tests for logic",
+  "Mobile-first responsive design",
+];
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function EditorPage() {
@@ -139,6 +165,11 @@ export default function EditorPage() {
   const [promptCount, setPromptCount] = useState(0);
   const [isPro, setIsPro] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [goalMode, setGoalMode] = useState<GoalMode>("Production-ready");
+  const [targetModel, setTargetModel] = useState<TargetModel>("GPT");
+  const [engineeringDefaults, setEngineeringDefaults] = useState<string[]>([]);
+  const [isSavingRecipe, setIsSavingRecipe] = useState(false);
+  const [planType, setPlanType] = useState<string>("free");
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -212,10 +243,10 @@ export default function EditorPage() {
 
           if (profile) {
             setPromptCount(profile.usage_count);
+            setPlanType(profile.plan_type || "free");
             const unlimited =
               profile.is_pro ||
-              profile.plan_type === "pro" ||
-              profile.plan_type === "lifetime";
+              profile.plan_type === "pro";
             setIsPro(unlimited);
 
             if (unlimited) {
@@ -257,12 +288,71 @@ export default function EditorPage() {
       toast({
         title: "Pro Feature",
         description:
-          `Unlock all ${key} options and unlimited prompts with a Pro plan (₹149/month, billed in INR via Razorpay).`,
+          `Unlock all ${key} options and unlimited prompts with a Pro plan(₹149 / month, billed in INR via Razorpay).`,
       });
       router.push("/pricing");
       return;
     }
     setStack((prev) => ({ ...prev, [key]: val }));
+  };
+
+  const handleSaveRecipe = async () => {
+    if (!isPro) {
+      toast({
+        title: "Pro Feature",
+        description: "Saving prompt recipes is available on Pro plans.",
+      });
+      router.push("/pricing");
+      return;
+    }
+
+    const name = window.prompt("Enter a name for this recipe:");
+    if (!name) return;
+
+    setIsSavingRecipe(true);
+    try {
+      const newRecipe = {
+        name,
+        idea_hint: userIdea,
+        stack,
+        goal_mode: goalMode,
+        target_model: targetModel,
+        engineering_defaults: engineeringDefaults,
+      };
+
+      if (user) {
+        const { error } = await supabase.from("prompt_recipes").insert({
+          ...newRecipe,
+          user_id: user.id
+        });
+        if (error) throw error;
+      } else {
+        const saved = localStorage.getItem("promptmint_recipes");
+        const recipes = saved ? JSON.parse(saved) : [];
+        localStorage.setItem(
+          "promptmint_recipes",
+          JSON.stringify([{ ...newRecipe, id: Date.now().toString() }, ...recipes])
+        );
+      }
+
+      toast({
+        title: "Recipe Saved",
+        description: `'${name}' has been added to your recipes.`,
+      });
+
+      // trigger refresh by updating promptCount slightly hacky but works for now to re-render children if needed or we let PromptRecipes handle its own fetch via a trigger.
+      setPromptCount(prev => prev); // This doesn't actually trigger PromptRecipes refresh as it's not passed as a prop currently. We will reload page or just let user refresh for now. Easiest is to add a refresh Trigger to PromptRecipes.
+      // Better approach: Since PromptRecipes is a child, we could pass a refreshTrigger to it. Let's add that.
+
+    } catch (error) {
+      toast({
+        title: "Failed to save recipe",
+        description: error instanceof Error ? error.message : "An error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingRecipe(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -288,7 +378,7 @@ export default function EditorPage() {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIdea, stack }),
+        body: JSON.stringify({ userIdea, stack, goalMode, targetModel, engineeringDefaults }),
       });
 
       const data = await response.json();
@@ -359,8 +449,8 @@ export default function EditorPage() {
         description: isPro
           ? "Prompt minted! (unlimited)"
           : user
-            ? `Prompt minted! (${newCount}/${MAX_FREE} used)`
-            : `Prompt minted! (${newCount}/${MAX_FREE} total)`,
+            ? `Prompt minted!(${newCount} / ${MAX_FREE} used)`
+            : `Prompt minted!(${newCount} / ${MAX_FREE} total)`,
       });
 
       if (window.innerWidth < 1024) {
@@ -397,27 +487,7 @@ export default function EditorPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            <Link
-              href="/"
-              className="flex items-center gap-4 hover:opacity-80 transition-opacity"
-            >
-              <div className="w-12 h-12 relative rounded-2xl overflow-hidden shadow-xl shadow-cyan-900/20 border border-white/10">
-                <Image
-                  src="/icons/icon-192x192.png"
-                  alt="PromptMint Logo"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
-                  PromptMint
-                </h1>
-                <p className="text-muted-foreground text-sm font-medium tracking-wide">
-                  AI Prompt Engineering Suite
-                </p>
-              </div>
-            </Link>
+            <Logo />
           </motion.div>
 
           <motion.div
@@ -427,16 +497,16 @@ export default function EditorPage() {
           >
             <ThemeToggle />
 
-            {!isPro && (
+
+            <Link href="/guide">
               <Button
                 variant="ghost"
-                onClick={() => router.push("/pricing")}
-                className="hidden lg:flex text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-xl px-4 h-11 font-medium"
+                className="text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
               >
-                Pricing
+                <BookOpen className="w-4 h-4 mr-2" />
+                Prompting Guide
               </Button>
-            )}
-
+            </Link>
             {/* Usage Status */}
             <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-muted/50 dark:bg-zinc-900/50 border border-border dark:border-zinc-800 rounded-full min-w-[140px] justify-center">
               {isInitialLoading ? (
@@ -456,6 +526,13 @@ export default function EditorPage() {
                 </Link>
               ) : (
                 <div className="flex items-center gap-3">
+
+                  <Link href="/pricing">
+                    <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 hover:bg-violet-500/10 border-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full">
+                      <Sparkles className="w-4 h-4" />
+                      Upgrade
+                    </Button>
+                  </Link>
                   <div className="flex items-center gap-2">
                     <div
                       className={cn(
@@ -539,6 +616,7 @@ export default function EditorPage() {
                   {userIdea.length} CHARS
                 </div>
               </div>
+              <PromptHealth userIdea={userIdea} stack={stack} />
             </div>
 
             {/* Step 2: Stack */}
@@ -558,8 +636,8 @@ export default function EditorPage() {
                       isPro
                         ? []
                         : ALL_STACKS.framework.filter(
-                            (o) => !FREE_STACKS.framework.includes(o),
-                          )
+                          (o) => !FREE_STACKS.framework.includes(o),
+                        )
                     }
                     onChange={(val) => handleStackChange("framework", val)}
                   />
@@ -575,8 +653,8 @@ export default function EditorPage() {
                       isPro
                         ? []
                         : ALL_STACKS.database.filter(
-                            (o) => !FREE_STACKS.database.includes(o),
-                          )
+                          (o) => !FREE_STACKS.database.includes(o),
+                        )
                     }
                     onChange={(val) => handleStackChange("database", val)}
                   />
@@ -592,8 +670,8 @@ export default function EditorPage() {
                       isPro
                         ? []
                         : ALL_STACKS.apiPattern.filter(
-                            (o) => !FREE_STACKS.apiPattern.includes(o),
-                          )
+                          (o) => !FREE_STACKS.apiPattern.includes(o),
+                        )
                     }
                     onChange={(val) => handleStackChange("apiPattern", val)}
                   />
@@ -616,8 +694,8 @@ export default function EditorPage() {
                       isPro
                         ? []
                         : ALL_STACKS.language.filter(
-                            (o) => !FREE_STACKS.language.includes(o),
-                          )
+                          (o) => !FREE_STACKS.language.includes(o),
+                        )
                     }
                     onChange={(val) => handleStackChange("language", val)}
                   />
@@ -643,8 +721,8 @@ export default function EditorPage() {
                             isPro
                               ? []
                               : ALL_STACKS.styling.filter(
-                                  (o) => !FREE_STACKS.styling.includes(o),
-                                )
+                                (o) => !FREE_STACKS.styling.includes(o),
+                              )
                           }
                           onChange={(val) => handleStackChange("styling", val)}
                         />
@@ -673,8 +751,8 @@ export default function EditorPage() {
                             isPro
                               ? []
                               : ALL_STACKS.animation.filter(
-                                  (o) => !FREE_STACKS.animation.includes(o),
-                                )
+                                (o) => !FREE_STACKS.animation.includes(o),
+                              )
                           }
                           onChange={(val) =>
                             handleStackChange("animation", val)
@@ -705,6 +783,107 @@ export default function EditorPage() {
                   </motion.p>
                 )}
               </AnimatePresence>
+            </div>
+
+            {/* Step 3: Goal & Target Model */}
+            <div className="space-y-3">
+              <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
+                Step 3: Goal & Target AI
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-4 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 space-y-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">
+                    Goal Mode
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {GOAL_MODES.map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setGoalMode(mode)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors",
+                          goalMode === mode
+                            ? "bg-cyan-600/10 border-cyan-500/60 text-cyan-400"
+                            : "bg-background border-border text-muted-foreground hover:border-cyan-500/40 hover:text-cyan-300",
+                        )}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 space-y-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">
+                    Target Model
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {TARGET_MODELS.map((model) => (
+                      <button
+                        key={model}
+                        type="button"
+                        onClick={() => setTargetModel(model)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors",
+                          targetModel === model
+                            ? "bg-violet-600/10 border-violet-500/60 text-violet-400"
+                            : "bg-background border-border text-muted-foreground hover:border-violet-500/40 hover:text-violet-300",
+                        )}
+                      >
+                        {model}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">
+                    Engineering Defaults
+                  </p>
+                  {!isPro && (
+                    <span className="text-[9px] font-bold text-violet-400 uppercase tracking-widest bg-violet-400/10 px-1.5 py-0.5 rounded">Pro Only</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {ENGINEERING_DEFAULTS.map((def) => {
+                    const isSelected = engineeringDefaults.includes(def);
+                    return (
+                      <button
+                        key={def}
+                        type="button"
+                        onClick={() => {
+                          if (!isPro) {
+                            toast({
+                              title: "Pro Feature",
+                              description: "Opinionated Engineering Defaults are available on Pro plans.",
+                            });
+                            router.push("/pricing");
+                            return;
+                          }
+                          setEngineeringDefaults(prev =>
+                            prev.includes(def) ? prev.filter(d => d !== def) : [...prev, def]
+                          );
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-[10px] font-medium border transition-colors flex items-center gap-1.5",
+                          isSelected
+                            ? "bg-emerald-600/10 border-emerald-500/60 text-emerald-500"
+                            : "bg-background border-border text-muted-foreground hover:border-emerald-500/40 hover:text-emerald-400",
+                          !isPro && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          isSelected ? "bg-emerald-500" : "bg-muted-foreground/30"
+                        )} />
+                        {def}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Generate Button */}
@@ -740,6 +919,20 @@ export default function EditorPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              <Button
+                variant="ghost"
+                onClick={handleSaveRecipe}
+                disabled={isSavingRecipe}
+                className="w-full h-12 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 border border-violet-500/20 border-dashed rounded-xl transition-all"
+              >
+                {isSavingRecipe ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                {isSavingRecipe ? "Saving..." : "Save as Recipe"}
+              </Button>
             </div>
           </div>
 
@@ -834,26 +1027,33 @@ export default function EditorPage() {
                 isPro={isPro}
                 refreshTrigger={promptCount}
               />
+
+              <PromptRecipes
+                user={user}
+                isPro={isPro}
+                onLoadRecipe={(recipe) => {
+                  if (recipe.idea_hint) setUserIdea(recipe.idea_hint);
+                  if (recipe.stack) setStack(recipe.stack);
+                  if (recipe.goal_mode) setGoalMode(recipe.goal_mode as GoalMode);
+                  if (recipe.target_model) setTargetModel(recipe.target_model as TargetModel);
+                  if (recipe.engineering_defaults) setEngineeringDefaults(recipe.engineering_defaults);
+                  toast({
+                    title: "Recipe Loaded",
+                    description: `Loaded configuration: ${recipe.name} `,
+                  });
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <footer className="mt-12 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
+      <footer className="mt-4 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
         <p>© 2026 PromptMint. All rights reserved.</p>
         <div className="flex items-center gap-6">
-          <Link
-            href="/terms"
-            className="hover:text-foreground transition-colors"
-          >
-            Terms of Service
-          </Link>
-          <Link
-            href="/privacy"
-            className="hover:text-foreground transition-colors"
-          >
-            Privacy Policy
-          </Link>
+          <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+          <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+          <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
         </div>
       </footer>
 

@@ -1,4 +1,4 @@
-import { Stack } from "./types";
+import { Stack, GenerationOptions, TargetModel } from "./types";
 
 /**
  * Frameworks that are purely server-side.
@@ -99,6 +99,30 @@ function buildResponseGuidance(context: "frontend" | "backend" | "fullstack"): s
 - Accessibility considerations`;
 }
 
+function buildTargetModelHint(targetModel: TargetModel): string {
+  if (targetModel === "Claude") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Claude, an expert software engineer. Focus on clear sectioning, concise but complete bullet points, and explicit constraints so you can generate well-structured, type-safe code."`;
+  }
+  if (targetModel === "GPT") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are ChatGPT (GPT-4), an expert software engineer. Focus on precise instructions, explicit file structures, and clear expectations about frameworks, libraries, and error handling."`;
+  }
+  if (targetModel === "Perplexity") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Perplexity, an expert software engineer. Focus on crisp, actionable steps. Avoid unnecessary narrative so that you focus entirely on implementation details."`;
+  }
+  if (targetModel === "Grok") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Grok, an expert software engineer. Keep your instructions direct and opinionated about the tech stack and coding style so the generated code is highly consistent."`;
+  }
+  return "";
+}
+
 /**
  * Builds a system prompt for the AI to transform a user idea into a CO-STAR structured prompt.
  *
@@ -106,17 +130,47 @@ function buildResponseGuidance(context: "frontend" | "backend" | "fullstack"): s
  * @param stack - The selected technology stack constraints.
  * @returns A formatted system prompt string.
  */
-export function buildSystemPrompt(userIdea: string, stack: Stack): string {
+export function buildSystemPrompt(
+  userIdea: string,
+  stack: Stack,
+  options?: GenerationOptions,
+): string {
   const context = resolveProjectContext(stack);
   const stackEnforcement = buildStackEnforcement(stack, context);
   const responseGuidance = buildResponseGuidance(context);
+  const goalMode = options?.goalMode;
+  const targetModel = options?.targetModel;
 
   const contextLabel =
     context === "backend"
       ? "server-side / backend"
       : context === "fullstack"
-      ? "full-stack"
-      : "frontend / UI";
+        ? "full-stack"
+        : "frontend / UI";
+
+  let goalLine = "Choose a sensible balance between scaffolding and implementation detail based on the complexity of the idea.";
+  if (goalMode === "Scaffold") {
+    goalLine = `The user has selected the goal mode **"Scaffold"**. 
+CRITICAL: You must instruct the AI to heavily favor empty boilerplate, scaffolding, and file structures. Instruct it to leave the actual business logic out, substituting it with "TODO" comments. Do not ask for production-hardening.`;
+  } else if (goalMode === "Production-ready") {
+    goalLine = `The user has selected the goal mode **"Production-ready"**. 
+CRITICAL: You must instruct the AI to generate comprehensive, production-ready code. This includes full error handling, strict typing, edge cases, and testing strategies. No shortcuts.`;
+  } else if (goalMode === "Refactor existing code") {
+    goalLine = `The user has selected the goal mode **"Refactor existing code"**.
+CRITICAL: You must instruct the AI to focus on improving code quality, readability, separation of concerns, and performance of existing code, rather than generating a new feature from scratch.`;
+  }
+
+  const modelHint = targetModel
+    ? buildTargetModelHint(targetModel)
+    : "";
+
+  let defaultsBlock = "";
+  if (options?.engineeringDefaults && options.engineeringDefaults.length > 0) {
+    const defaultLines = options.engineeringDefaults.map(d => `- ${d}`).join("\n");
+    defaultsBlock = `### Opinionated Engineering Defaults (MUST ENFORCE):
+You MUST add a section in your generated prompt named "**Engineering Defaults**" that strictly enforces these rules:
+${defaultLines}`;
+  }
 
   return `
 You are an expert prompt engineer. Your goal is to transform the user's messy idea into a highly effective development prompt.
@@ -132,10 +186,17 @@ Use these principles for valid ideas, applying **Adaptive Verbosity**:
 - **Audience**: An expert AI developer (like Cursor or Claude).
 - **Response**: ${responseGuidance}
 
+${modelHint}
+
+### Goal / Depth Preference:
+${goalLine}
+
 ### Project Context:
 This is a **${contextLabel}** task. Structure your output accordingly.
 ${context === "backend" ? "Do NOT mention or enforce any styling frameworks, animation libraries, or UI component patterns — they are irrelevant to this context." : ""}
 ${context === "fullstack" ? "Address both the server and client layers with equal depth." : ""}
+
+${defaultsBlock}
 
 ### Implementation Guidelines:
 1. **Adaptive Length**:

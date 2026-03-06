@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Share2, FileText } from "lucide-react";
+import { Copy, Check, Share2, FileText, FileDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -119,7 +119,6 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
         }
     };
 
-    // ... handleDownloadDoc remains the same ...
     const handleDownloadDoc = () => {
         if (!isPro) {
             toast({
@@ -171,6 +170,19 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
         if (typeof window !== 'undefined' && window.posthog) {
             window.posthog.capture('doc_exported');
         }
+    };
+
+    const handleDownloadMarkdown = () => {
+        if (!result) return;
+        const markdown = getFormattedMarkdown();
+        const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "promptmint-optimized-prompt.md";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const tokenCount = Math.round(result.length / 4);
@@ -228,7 +240,7 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
   <div className="flex items-center gap-0.5 flex-shrink-0">
     <div className="w-[1px] h-4 bg-border dark:bg-zinc-800 mr-0.5" />
 
-    {/* DOC */}
+                {/* DOC */}
     <Button
       variant="ghost"
       size="sm"
@@ -240,6 +252,17 @@ export function PromptOutput({ result, isLoading, isPro }: PromptOutputProps) {
     >
       <FileText className="w-3.5 h-3.5 flex-shrink-0" />
       <span className="hidden sm:inline text-[10px] font-bold">DOC</span>
+    </Button>
+
+    {/* MD */}
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleDownloadMarkdown}
+      className="h-8 w-8 sm:w-auto sm:px-3 p-0 text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-zinc-800 rounded-lg flex items-center justify-center gap-1.5"
+    >
+      <FileDown className="w-3.5 h-3.5 flex-shrink-0" />
+      <span className="hidden sm:inline text-[10px] font-bold">MD</span>
     </Button>
 
     {/* SHARE */}

@@ -64,6 +64,26 @@ export type ApiPatternType =
   | "WebSockets"
   | "Server Actions";
 
+// ─── Goal Mode / Target Model (NEW, optional) ───────────────────────────────
+export type GoalMode =
+  | "Scaffold"
+  | "Production-ready"
+  | "Refactor existing code";
+
+export type TargetModel =
+  | "Claude"
+  | "GPT"
+  | "Perplexity"
+  | "Grok";
+
+// ─── Opinionated Defaults (optional) ────────────────────────────────────────
+export interface OpinionatedDefaults {
+  featureFolders?: boolean;
+  useZod?: boolean;
+  preferRSC?: boolean;
+  includeTests?: boolean;
+}
+
 // ─── Stack ──────────────────────────────────────────────────────────────────
 export interface Stack {
   styling: StylingType;
@@ -73,4 +93,29 @@ export interface Stack {
   framework?: FrameworkType;
   database?: DatabaseType;
   apiPattern?: ApiPatternType;
+}
+
+export interface GenerationOptions {
+  goalMode?: GoalMode;
+  targetModel?: TargetModel;
+  engineeringDefaults?: string[];
+}
+
+export interface HistoryEntry {
+  id?: string;
+  idea: string;
+  result: string;
+  stack?: Record<string, string>;
+  timestamp: number;
+  tags?: string[];
+}
+
+export interface PromptRecipe {
+  id?: string;
+  name: string;
+  idea_hint: string;
+  stack: Stack;
+  goal_mode?: GoalMode;
+  target_model?: TargetModel;
+  engineering_defaults?: string[];
 }

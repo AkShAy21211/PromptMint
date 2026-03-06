@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { createClient } from "@/lib/supabase/client";
 import { type User } from "@supabase/supabase-js";
+import { Logo } from "@/components/Logo";
 
 const EXAMPLES = [
   {
@@ -146,14 +147,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
-                PromptMint
-              </h1>
-              <p className="text-muted-foreground text-sm font-medium tracking-wide">
-                AI Prompt Engineering Suite · Beta
-              </p>
-            </div>
+               <Logo />
           </motion.div>
 
           <motion.div

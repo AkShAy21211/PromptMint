@@ -2,25 +2,28 @@
 
 import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Logo } from "@/components/Logo";
+import Link from "next/link";
 
 export default function TermsOfService() {
-    const router = useRouter();
-
     return (
         <main className="min-h-screen bg-background text-foreground selection:bg-cyan-500/30 overflow-x-hidden">
-            <div className="max-w-4xl mx-auto px-6 py-12">
-                <nav className="flex items-center justify-between mb-16">
-                    <Button
-                        variant="ghost"
-                        onClick={() => router.push("/")}
-                        className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
-                    >
-                        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                        Back to Home
-                    </Button>
-                    <ThemeToggle />
+            <div className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+                <nav className="flex items-center justify-between mb-20 relative z-10">
+                    <Logo />
+                    <div className="flex items-center gap-4">
+                        <ThemeToggle />
+                        <Link href="/editor">
+                            <Button
+                                variant="ghost"
+                                className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
+                            >
+                                <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                                Back to Editor
+                            </Button>
+                        </Link>
+                    </div>
                 </nav>
 
                 <header className="mb-12">
@@ -94,6 +97,15 @@ export default function TermsOfService() {
                         </p>
                     </section>
                 </div>
+
+                <footer className="mt-20 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground">
+                    <p>© 2026 PromptMint. All rights reserved.</p>
+                    <div className="flex items-center gap-6">
+                        <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+                        <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+                        <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+                    </div>
+                </footer>
             </div>
         </main>
     );

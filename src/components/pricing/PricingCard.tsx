@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface PricingCardProps {
-    tier: "Free" | "Pro" | "Lifetime";
+    tier: "Free" | "Pro";
     price: string;
     description: string;
     features: string[];
@@ -51,18 +51,16 @@ export function PricingCard({
                     <div className={cn(
                         "w-10 h-10 rounded-2xl flex items-center justify-center border border-white/10",
                         tier === "Free" && "bg-emerald-500/10 text-emerald-500",
-                        tier === "Pro" && "bg-violet-500/10 text-violet-500",
-                        tier === "Lifetime" && "bg-cyan-500/10 text-cyan-500 shadow-lg shadow-cyan-500/20"
+                        tier === "Pro" && "bg-violet-500/10 text-violet-500"
                     )}>
                         {tier === "Free" && <Zap className="w-5 h-5 transition-transform group-hover:scale-110" />}
                         {tier === "Pro" && <Sparkles className="w-5 h-5 transition-transform group-hover:scale-110" />}
-                        {tier === "Lifetime" && <Trophy className="w-5 h-5 transition-transform group-hover:scale-110" />}
                     </div>
                     <h3 className="text-xl font-bold text-foreground">{tier}</h3>
                 </div>
                 <div className="flex items-baseline gap-1 mb-2">
                     <span className="text-4xl font-black text-foreground">{price}</span>
-                    {tier !== "Lifetime" && tier !== "Free" && (
+                    {tier !== "Free" && (
                         <span className="text-zinc-500 text-sm font-medium">/month</span>
                     )}
                 </div>
@@ -99,8 +97,7 @@ export function PricingCard({
             <div className={cn(
                 "absolute -inset-px rounded-[2.5rem] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none -z-10",
                 tier === "Free" && "bg-emerald-500 blur-2xl",
-                tier === "Pro" && "bg-violet-500 blur-2xl",
-                tier === "Lifetime" && "bg-cyan-500 blur-2xl"
+                tier === "Pro" && "bg-violet-500 blur-2xl"
             )} />
         </motion.div>
     );

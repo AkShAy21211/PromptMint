@@ -15,9 +15,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PromptMint — AI Prompt Generator for Developers",
-  description:
-    "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
+  title: "PromptMint | The Industrial-Grade AI Prompt Engineer",
+  description: "Stop arguing with AI. Structure your ideas into production-ready prompts for Next.js, Python, and more using the CO-STAR framework.",
+  keywords: ["prompt engineering", "AI prompt generator", "CO-STAR framework", "developer tools", "Claude prompts", "ChatGPT prompts"],
   manifest: "/manifest.json",
   icons: {
     icon: [

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { buildSystemPrompt } from "@/lib/buildSystemPrompt";
-import { Stack } from "@/lib/types";
+import { Stack, GoalMode, TargetModel } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 // Initialize Gemini API
@@ -22,8 +22,19 @@ export async function POST(req: NextRequest) {
     const forwarded = req.headers.get("x-forwarded-for");
     const ip = forwarded ? forwarded.split(/, /)[0] : "127.0.0.1";
 
-    const { userIdea, stack }: { userIdea: string; stack: Stack } =
-      await req.json();
+    const {
+      userIdea,
+      stack,
+      goalMode,
+      targetModel,
+      engineeringDefaults,
+    }: {
+      userIdea: string;
+      stack: Stack;
+      goalMode?: GoalMode;
+      targetModel?: TargetModel;
+      engineeringDefaults?: string[];
+    } = await req.json();
 
     // ── Input Validation ────────────────────────────────────────────────────
 
@@ -78,6 +89,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate optional goalMode / targetModel if provided
+    const VALID_GOAL_MODES: GoalMode[] = [
+      "Scaffold",
+      "Production-ready",
+      "Refactor existing code",
+    ];
+    const VALID_TARGET_MODELS: TargetModel[] = [
+      "Claude",
+      "GPT",
+      "Perplexity",
+      "Grok",
+    ];
+
+    if (goalMode && !VALID_GOAL_MODES.includes(goalMode)) {
+      return NextResponse.json(
+        { error: "INVALID_OPTION", message: "Invalid goal mode selection." },
+        { status: 400 },
+      );
+    }
+
+    if (targetModel && !VALID_TARGET_MODELS.includes(targetModel)) {
+      return NextResponse.json(
+        { error: "INVALID_OPTION", message: "Invalid target model selection." },
+        { status: 400 },
+      );
+    }
+
+    if (engineeringDefaults && !Array.isArray(engineeringDefaults)) {
+      return NextResponse.json(
+        { error: "INVALID_OPTION", message: "Engineering defaults must be an array." },
+        { status: 400 },
+      );
+    }
+
     // ── Usage Limit Logic (Resilient) ───────────────────────────────────────
 
     let isUnlimited = false;
@@ -97,8 +142,7 @@ export async function POST(req: NextRequest) {
         const currentCount = profile?.usage_count || 0;
         isUnlimited = !!(
           profile?.is_pro ||
-          profile?.plan_type === "pro" ||
-          profile?.plan_type === "lifetime"
+          profile?.plan_type === "pro"
         );
 
         const lastReset = profile?.last_reset
@@ -195,7 +239,11 @@ export async function POST(req: NextRequest) {
 
     // ── Generate ────────────────────────────────────────────────────────────
 
-    const systemPrompt = buildSystemPrompt(userIdea, stack);
+    const systemPrompt = buildSystemPrompt(userIdea, stack, {
+      goalMode,
+      targetModel,
+      engineeringDefaults,
+    });
 
     try {
       const result = await model.generateContent(systemPrompt);

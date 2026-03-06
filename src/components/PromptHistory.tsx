@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { History, ChevronDown, ChevronUp, Trash2, ArrowUpRight, Loader2, AlertTriangle } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Trash2, ArrowUpRight, Loader2, AlertTriangle, Tag, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -13,6 +13,7 @@ export interface HistoryEntry {
     result: string;
     stack?: Record<string, string>;
     timestamp: number;
+    tags?: string[];
 }
 
 interface PromptHistoryProps {
@@ -24,13 +25,15 @@ interface PromptHistoryProps {
 
 const STORAGE_KEY = "promptmint_history";
 
-export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: PromptHistoryProps) {
+export function PromptHistory({ onRestore, user, isPro, refreshTrigger = 0 }: PromptHistoryProps) {
     const [history, setHistory] = useState<HistoryEntry[]>([]);
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
     const [isOffline, setIsOffline] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [newTags, setNewTags] = useState<Record<number, string>>({});
     const supabase = createClient();
 
     useEffect(() => {
@@ -51,17 +54,21 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
 
                     if (data) {
                         type SupabasePromptRow = {
+                            id: string;
                             title: string;
                             content: string;
                             stack: Record<string, string>;
                             created_at: string;
+                            tags: string[];
                         };
                         setHistory(
                             (data as SupabasePromptRow[]).map((p) => ({
+                                id: p.id,
                                 idea: p.title,
                                 result: p.content,
                                 stack: p.stack,
                                 timestamp: new Date(p.created_at).getTime(),
+                                tags: p.tags || [],
                             }))
                         );
                     }
@@ -130,10 +137,59 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
         }
     };
 
+    const handleAddTag = async (index: number, tag: string) => {
+        const entry = history[index];
+        if (!tag.trim() || entry.tags?.includes(tag.trim())) return;
+
+        const updatedTags = [...(entry.tags || []), tag.trim()];
+        const updatedHistory = [...history];
+        updatedHistory[index] = { ...entry, tags: updatedTags };
+        setHistory(updatedHistory);
+
+        if (user && isPro && !isOffline && entry.id) {
+            try {
+                await supabase.from("prompts").update({ tags: updatedTags }).eq("id", entry.id);
+            } catch (err) {
+                console.error("Add tag failed:", err);
+            }
+        } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
+        }
+    };
+
+    const handleRemoveTag = async (index: number, tagToRemove: string) => {
+        const entry = history[index];
+        const updatedTags = (entry.tags || []).filter(t => t !== tagToRemove);
+        const updatedHistory = [...history];
+        updatedHistory[index] = { ...entry, tags: updatedTags };
+        setHistory(updatedHistory);
+
+        if (user && isPro && !isOffline && entry.id) {
+            try {
+                await supabase.from("prompts").update({ tags: updatedTags }).eq("id", entry.id);
+            } catch (err) {
+                console.error("Remove tag failed:", err);
+            }
+        } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
+        }
+    };
+
+    const filteredHistory = searchQuery.trim()
+        ? history.filter((entry) => {
+            const q = searchQuery.toLowerCase();
+            return (
+                entry.idea.toLowerCase().includes(q) ||
+                entry.result.toLowerCase().includes(q) ||
+                (entry.tags && entry.tags.some(t => t.toLowerCase().includes(q)))
+            );
+        })
+        : history;
+
     return (
         <div className="w-full space-y-4 pt-8 border-t border-border/50">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                         <History className="w-4 h-4" />
@@ -163,53 +219,63 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
                     {loading && <Loader2 className="w-3 h-3 animate-spin text-cyan-500" />}
                 </div>
 
-                {/* Clear All */}
-                <AnimatePresence mode="wait">
-                    {history.length > 0 &&
-                        (!showClearConfirm ? (
-                            <motion.div
-                                key="clear-btn"
-                                initial={{ opacity: 0, x: 10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 10 }}
-                            >
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowClearConfirm(true)}
-                                    className="text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors h-7 px-2"
+                <div className="flex items-center gap-2">
+                    <input
+                        type="text"
+                        placeholder="Search ideas or output..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 px-3 rounded-lg bg-card/40 dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/60 w-full md:w-56"
+                    />
+
+                    {/* Clear All */}
+                    <AnimatePresence mode="wait">
+                        {history.length > 0 &&
+                            (!showClearConfirm ? (
+                                <motion.div
+                                    key="clear-btn"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 10 }}
                                 >
-                                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                                    Clear All
-                                </Button>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="confirm-btns"
-                                initial={{ opacity: 0, x: 10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 10 }}
-                                className="flex items-center gap-2"
-                            >
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowClearConfirm(false)}
-                                    className="text-muted-foreground hover:text-foreground h-7 px-2 font-bold text-[10px] uppercase tracking-wider"
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowClearConfirm(true)}
+                                        className="text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors h-7 px-2"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                        Clear All
+                                    </Button>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="confirm-btns"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 10 }}
+                                    className="flex items-center gap-2"
                                 >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={clearHistory}
-                                    className="bg-red-500 text-white hover:bg-red-600 h-7 px-3 font-bold text-[10px] uppercase tracking-wider rounded-lg"
-                                >
-                                    Confirm Delete
-                                </Button>
-                            </motion.div>
-                        ))}
-                </AnimatePresence>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowClearConfirm(false)}
+                                        className="text-muted-foreground hover:text-foreground h-7 px-2 font-bold text-[10px] uppercase tracking-wider"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={clearHistory}
+                                        className="bg-red-500 text-white hover:bg-red-600 h-7 px-3 font-bold text-[10px] uppercase tracking-wider rounded-lg"
+                                    >
+                                        Confirm Delete
+                                    </Button>
+                                </motion.div>
+                            ))}
+                    </AnimatePresence>
+                </div>
             </div>
 
             {/* List */}
@@ -221,8 +287,15 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
                             Your recent mintings will appear here.
                         </p>
                     </div>
+                ) : filteredHistory.length === 0 ? (
+                    <div className="py-6 px-4 border border-dashed border-border/50 rounded-xl text-center">
+                        <p className="text-sm text-muted-foreground">No entries match your search.</p>
+                        <p className="text-[11px] text-muted-foreground/60 mt-1">
+                            Try adjusting your keywords or clearing the search box.
+                        </p>
+                    </div>
                 ) : (
-                    history.map((entry, index) => {
+                    filteredHistory.map((entry, index) => {
                         const isExpanded = expandedIndex === index;
                         const isPendingDelete = deleteConfirmIndex === index;
 
@@ -240,10 +313,26 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
                                     className="w-full flex items-center justify-between p-4 text-left"
                                 >
                                     <div className="flex-1 min-w-0 pr-4">
-                                        <p className="text-sm text-foreground/90 truncate font-medium">
-                                            {entry.idea}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground uppercase mt-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <p className="text-sm text-foreground/90 truncate font-medium">
+                                                {entry.idea}
+                                            </p>
+                                            {entry.tags && entry.tags.length > 0 && (
+                                                <div className="hidden sm:flex items-center gap-1 shrink-0">
+                                                    {entry.tags.slice(0, 2).map(tag => (
+                                                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 truncate max-w-[60px]">
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                    {entry.tags.length > 2 && (
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                                                            +{entry.tags.length - 2}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase">
                                             {new Date(entry.timestamp).toLocaleString()}
                                         </p>
                                     </div>
@@ -264,6 +353,46 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger }: Prompt
                                             className="overflow-hidden"
                                         >
                                             <div className="px-4 pb-4 border-t border-border/50 space-y-3 pt-3">
+                                                {/* Tags Editor */}
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+                                                    {entry.tags?.map((tag) => (
+                                                        <span key={tag} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                            {tag}
+                                                            <button
+                                                                onClick={() => handleRemoveTag(index, tag)}
+                                                                className="hover:text-amber-400 transition-colors"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                    <div className="flex items-center gap-1 border border-dashed border-border rounded-md px-2 py-0.5 max-w-[120px]">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Add tag..."
+                                                            value={newTags[index] || ""}
+                                                            onChange={(e) => setNewTags(prev => ({ ...prev, [index]: e.target.value }))}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === "Enter") {
+                                                                    handleAddTag(index, newTags[index] || "");
+                                                                    setNewTags(prev => ({ ...prev, [index]: "" }));
+                                                                }
+                                                            }}
+                                                            className="bg-transparent border-none text-[10px] outline-none w-full text-foreground placeholder:text-muted-foreground"
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                handleAddTag(index, newTags[index] || "");
+                                                                setNewTags(prev => ({ ...prev, [index]: "" }));
+                                                            }}
+                                                            className="text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <Plus className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
                                                 {/* Result preview */}
                                                 <div className="bg-muted/20 rounded-lg p-3 max-h-32 overflow-y-auto">
                                                     <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">

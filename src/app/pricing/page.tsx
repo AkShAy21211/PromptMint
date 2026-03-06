@@ -13,6 +13,7 @@ import { ArrowLeft, ShieldCheck, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 
 export default function PricingPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -186,18 +187,25 @@ export default function PricingPage() {
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         <nav className="flex items-center justify-between mb-20 relative z-10">
+          {/* Left Side: Logo only */}
+          <div className="flex items-center">
+            <Logo />
+          </div>
+
+          {/* Right Side: Button and Toggle */}
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/")}
-              className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-              Back to Editor
-            </Button>
+            <ThemeToggle />
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                Back to Editor
+              </Button>
+            </Link>
           
           </div>
-  <ThemeToggle />
         </nav>
 
         <header className="text-center max-w-3xl mx-auto mb-20 space-y-6">
@@ -346,20 +354,12 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <footer className="mt-24 pb-12 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col items-center justify-between gap-4 text-xs font-medium text-muted-foreground">
-          <div className="flex items-center gap-6 mt-4">
-            <Link
-              href="/terms"
-              className="hover:text-foreground transition-colors"
-            >
-              Terms of Service
-            </Link>
-            <Link
-              href="/privacy"
-              className="hover:text-foreground transition-colors"
-            >
-              Privacy Policy
-            </Link>
+        <footer className="mt-4 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
+          <p>© 2026 PromptMint. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
           </div>
         </footer>
       </div>

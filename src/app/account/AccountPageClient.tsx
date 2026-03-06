@@ -13,12 +13,16 @@ import {
   ArrowLeft,
   LogOut,
   Sparkles,
-  Trophy,
   BarChart3,
+  Save,
+  Shield,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import Link from "next/link";
 
 interface UserProfile {
   usage_count: number;
@@ -30,6 +34,8 @@ interface UserProfile {
 export default function AccountPageClient() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [recipeCount, setRecipeCount] = useState(0);
+  const [historyCount, setHistoryCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,14 +53,30 @@ export default function AccountPageClient() {
 
       setUser(session.user);
 
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
 
-      setProfile(profileData as UserProfile);
-      setLoading(false);
+        if (!profileError) {
+          setProfile(profileData as UserProfile);
+        }
+
+        // Fetch Library Stats
+        const [recipesRes, historyRes] = await Promise.all([
+          supabase.from("prompt_recipes").select("id", { count: "exact" }).eq("user_id", session.user.id),
+          supabase.from("prompts").select("id", { count: "exact" }).eq("user_id", session.user.id),
+        ]);
+
+        setRecipeCount(recipesRes.count ?? 0);
+        setHistoryCount(historyRes.count ?? 0);
+      } catch (error) {
+        console.error("Error fetching account data:", error);
+      } finally {
+        setLoading(false);
+      }
 
       if (searchParams?.get("sync")) {
         toast({
@@ -81,7 +103,7 @@ export default function AccountPageClient() {
     100,
   );
   const isPro =
-    profile?.plan_type === "pro" || profile?.plan_type === "lifetime";
+    profile?.plan_type === "pro";
 
   return (
     <main className="min-h-screen bg-background text-foreground selection:bg-violet-500/30">
@@ -91,32 +113,35 @@ export default function AccountPageClient() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/5 blur-[120px] rounded-full" />
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <nav className="flex items-center justify-between mb-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <nav className="flex items-center justify-between mb-12 relative z-10">
+          <Logo />
           <div className="flex items-center gap-4">
+
+            <ThemeToggle />
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                Back to Editor
+              </Button>
+            </Link>
             <Button
               variant="ghost"
-              onClick={() => router.push("/")}
-              className="group text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-4"
+              size="icon"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.posthog?.reset?.();
+                window.location.href = "/";
+              }}
+              className="w-11 h-11 rounded-xl bg-muted/50 dark:bg-zinc-900/50 border border-border dark:border-zinc-800 text-muted-foreground hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-500/5 transition-all"
             >
-              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-              Editor
+              <LogOut className="w-5 h-5" />
             </Button>
-            <ThemeToggle />
-          </div>
 
-          <Button
-            variant="ghost"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.posthog?.reset?.();
-              window.location.href = "/";
-            }}
-            className="text-muted-foreground hover:text-rose-400 hover:bg-rose-400/5 rounded-2xl"
-          >
-            Sign Out
-            <LogOut className="w-4 h-4 ml-2" />
-          </Button>
+          </div>
         </nav>
 
         <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -132,11 +157,7 @@ export default function AccountPageClient() {
                 : "bg-muted/50 dark:bg-zinc-900/50 border-border dark:border-zinc-800 text-muted-foreground",
             )}
           >
-            {profile?.plan_type === "lifetime" ? (
-              <Trophy className="w-5 h-5" />
-            ) : (
-              <Sparkles className="w-5 h-5" />
-            )}
+            <Sparkles className="w-5 h-5" />
             <div className="flex flex-col">
               <span className="font-bold uppercase tracking-widest text-xs">
                 {(profile?.plan_type ?? "FREE").toUpperCase()} MEMBERSHIP
@@ -255,21 +276,86 @@ export default function AccountPageClient() {
           </motion.div>
         </div>
 
-        {/* Support Section */}
-        <section className="bg-muted/30 dark:bg-zinc-900/20 border border-border dark:border-white/5 rounded-3xl p-8 text-center space-y-4">
-          <p className="text-muted-foreground text-sm font-medium">
-            Need help with your subscription or have questions?
-          </p>
-          <div className="flex items-center justify-center gap-6">
-            <div className="w-1 h-1 bg-zinc-800 rounded-full" />
-            <a
-              href="mailto:support@promptmint.com"
-              className="text-violet-500 text-sm font-bold hover:underline"
-            >
-              Contact Support
-            </a>
+        {/* Library Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border dark:border-white/5 p-8 rounded-[2.5rem] flex items-center justify-between group hover:border-violet-500/30 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 text-indigo-500 group-hover:scale-110 transition-transform">
+                <Save className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Saved Recipes</p>
+                <h3 className="text-2xl font-black">{recipeCount}</h3>
+              </div>
+            </div>
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                Manage
+              </Button>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-card/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border dark:border-white/5 p-8 rounded-[2.5rem] flex items-center justify-between group hover:border-cyan-500/30 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center border border-cyan-500/20 text-cyan-500 group-hover:scale-110 transition-transform">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">History Items</p>
+                <h3 className="text-2xl font-black">{historyCount}</h3>
+              </div>
+            </div>
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                Browse
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* Beta Supporter Section */}
+        <section className="bg-gradient-to-br from-violet-600/10 via-background to-cyan-600/10 border border-violet-500/20 rounded-[2.5rem] p-10 relative overflow-hidden mb-12">
+          <div className="absolute top-0 right-0 p-4">
+            <Shield className="w-20 h-20 text-violet-500/10 -rotate-12" />
+          </div>
+          <div className="relative z-10 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 text-violet-500 text-[10px] font-bold uppercase tracking-widest">
+              <Sparkles className="w-3 h-3" />
+              Early Adopter Advantage
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black max-w-md leading-tight">
+              You&apos;re helping us build the future of prompting.
+            </h2>
+            <p className="text-muted-foreground max-w-lg leading-relaxed">
+              As a beta user, you have early access to our experimental model flavors. Learn how to maximize your <span className="text-foreground font-bold">{profile?.plan_type === 'pro' ? 'Pro' : 'Free'}</span> account with our industrial-grade guide.
+            </p>
+            <Link href="/guide">
+              <Button className="rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold px-8 h-12">
+                <BookOpen className="w-4 h-4 mr-2" />
+                Read the Playbook
+              </Button>
+            </Link>
           </div>
         </section>
+
+        {/* Support Section */}
+        <footer className="mt-4 pb-8 border-t border-border/50 dark:border-zinc-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground max-w-7xl mx-auto px-6">
+          <p>© 2026 PromptMint. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+          </div>
+        </footer>
       </div>
     </main>
   );
