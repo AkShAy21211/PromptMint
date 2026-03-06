@@ -205,9 +205,12 @@ export default function PricingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <span className="px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-6 inline-block">
-              Pricing Options
+            <span className="px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-3 inline-block">
+              Beta · Early-supporter Pricing
             </span>
+            <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-[0.2em] mb-3">
+              Pricing in INR · Payments via Razorpay (your bank may apply FX conversion)
+            </p>
             <h1 className="text-5xl md:text-6xl font-black tracking-tight text-foreground mb-6">
               Amplify Your <br />
               <span className="bg-gradient-to-r from-cyan-600 via-violet-600 to-emerald-600 dark:from-cyan-400 dark:via-violet-400 dark:to-emerald-400 bg-clip-text text-transparent">

@@ -256,7 +256,8 @@ export default function EditorPage() {
     if (!isPro && !freeOptions.includes(val)) {
       toast({
         title: "Pro Feature",
-        description: `Unlock all ${key} options with a Pro plan.`,
+        description:
+          `Unlock all ${key} options and unlimited prompts with a Pro plan (₹149/month, billed in INR via Razorpay).`,
       });
       router.push("/pricing");
       return;

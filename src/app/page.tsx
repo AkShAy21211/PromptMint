@@ -146,13 +146,12 @@ export default function LandingPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-           
             <div>
               <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
                 PromptMint
               </h1>
               <p className="text-muted-foreground text-sm font-medium tracking-wide">
-                AI Prompt Engineering Suite
+                AI Prompt Engineering Suite · Beta
               </p>
             </div>
           </motion.div>
@@ -250,7 +249,7 @@ export default function LandingPage() {
                 Start Minting Free
               </Button>
               <span className="text-xs text-zinc-500 font-medium">
-                5 free prompts · No card needed
+                5 free prompts · No card needed · Pricing in INR via Razorpay
               </span>
             </motion.div>
           </div>

@@ -137,9 +137,14 @@ export default function AccountPageClient() {
             ) : (
               <Sparkles className="w-5 h-5" />
             )}
-            <span className="font-bold uppercase tracking-widest text-xs">
-              {(profile?.plan_type ?? "FREE").toUpperCase()} MEMBERSHIP
-            </span>
+            <div className="flex flex-col">
+              <span className="font-bold uppercase tracking-widest text-xs">
+                {(profile?.plan_type ?? "FREE").toUpperCase()} MEMBERSHIP
+              </span>
+              <span className="text-[10px] text-muted-foreground/70 font-medium">
+                Beta · Early-supporter pricing in INR via Razorpay
+              </span>
+            </div>
           </div>
         </header>
 
