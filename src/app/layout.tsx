@@ -16,15 +16,20 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "PromptMint — AI Prompt Generator for Developers",
-  description: "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
+  description:
+    "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/icon-192x192.png",
+    icon: [
+      { url: "/icons/favicon.ico", type: "image/x-icon" },
+      { url: "/icons/icon-192x192.png", type: "image/png", sizes: "192x192" },
+    ],
     apple: "/icons/icon-192x192.png",
   },
   openGraph: {
     title: "PromptMint — AI Prompt Generator for Developers",
-    description: "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
+    description:
+      "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
     url: "https://promptmint.dev",
     siteName: "PromptMint",
     locale: "en_US",
@@ -33,7 +38,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "PromptMint — AI Prompt Generator for Developers",
-    description: "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
+    description:
+      "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
   },
   verification: {
     google: "psXBJWyp67CAH1mV1zKdKDT8C1w6kf-XZ3lOJnFQ-Kk",
@@ -63,9 +69,7 @@ export default function RootLayout({
           <BetaBanner enabled={true} dismissible={true} />
           <BugReportButton />
 
-          <PHProvider>
-            {children}
-          </PHProvider>
+          <PHProvider>{children}</PHProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -147,9 +147,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            <div className="w-12 h-12 relative rounded-2xl overflow-hidden shadow-xl shadow-cyan-900/20 border border-white/10">
-              <Image src="/icons/icon-192x192.png" alt="PromptMint Logo" fill className="object-cover" />
-            </div>
+           
             <div>
               <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
                 PromptMint

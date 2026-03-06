@@ -17,8 +17,8 @@ export const pricingTiers = [
     {
         id: "pro_monthly",
         name: "Pro",
-        price: "₹499",
-        priceNumeric: 499,
+        price: "₹149",
+        priceNumeric: 149,
         description: "The sweet spot for active developers and prompt engineers.",
         features: [
             "Unlimited prompts",

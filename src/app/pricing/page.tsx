@@ -196,23 +196,9 @@ export default function PricingPage() {
               <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
               Back to Editor
             </Button>
-            <ThemeToggle />
+          
           </div>
-
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 relative rounded-lg overflow-hidden shadow-md shadow-cyan-900/20 border border-white/10">
-              <Image
-                src="/icons/icon-192x192.png"
-                alt="PromptMint Logo"
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            <span className="font-bold tracking-tight text-foreground/90">
-              PromptMint PRO
-            </span>
-          </div>
+  <ThemeToggle />
         </nav>
 
         <header className="text-center max-w-3xl mx-auto mb-20 space-y-6">
@@ -265,7 +251,8 @@ export default function PricingPage() {
         <p className="text-sm text-muted-foreground max-w-3xl mx-auto text-center mb-8">
           Note: Free tier limits reset every 30 days. Guests and signed-in free
           accounts both receive 5 prompts per month — guests are tracked by IP
-          (local/guest storage) while signed-in users are tracked on your account.
+          (local/guest storage) while signed-in users are tracked on your
+          account.
         </p>
 
         {/* ROI Justification Section */}
@@ -351,7 +338,8 @@ export default function PricingPage() {
             </div>
             <h4 className="font-bold text-foreground">Global History (Pro)</h4>
             <p className="text-sm text-muted-foreground">
-              Cloud-synced prompt history available to Pro subscribers; falls back to local storage when offline.
+              Cloud-synced prompt history available to Pro subscribers; falls
+              back to local storage when offline.
             </p>
           </div>
         </section>
