@@ -23,7 +23,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { PromptHistory } from "@/components/PromptHistory";
 import { LimitModal } from "@/components/LimitModal";
@@ -136,8 +135,7 @@ export default function EditorPage() {
   const [recipeRefreshTrigger, setRecipeRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
-  const { user, profile, loading: authLoading } = useAuth();
-  const supabase = createClient();
+  const { user, profile, loading: authLoading, supabase } = useAuth();
 
 
   // ─── Auth ──────────────────────────────────────────────────────────────────
@@ -402,7 +400,7 @@ export default function EditorPage() {
             </Link>
             {/* Usage Status */}
             <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-muted/50 dark:bg-zinc-900/50 border border-border dark:border-zinc-800 rounded-full min-w-[140px] justify-center text-zinc-500">
-              {authLoading ? (
+              {authLoading && !profile ? (
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-muted-foreground/30 dark:bg-zinc-700 animate-pulse" />
                   <div className="h-3 w-20 bg-muted dark:bg-zinc-800 rounded-md animate-pulse" />
@@ -458,7 +456,7 @@ export default function EditorPage() {
               )}
             </div>
 
-            {authLoading ? (
+            {authLoading && !user ? (
               <div className="flex gap-2">
                 <div className="w-11 h-11 bg-muted/50 rounded-xl animate-pulse" />
                 <div className="w-11 h-11 bg-muted/50 rounded-xl animate-pulse" />

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -27,14 +26,13 @@ import Link from "next/link";
 
 
 export default function AccountPageClient() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, supabase } = useAuth();
   const [recipeCount, setRecipeCount] = useState(0);
   const [historyCount, setHistoryCount] = useState(0);
   const [isCancelling, setIsCancelling] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!user) {

@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { User, SupabaseClient } from "@supabase/supabase-js";
 
 interface Profile {
     usage_count: number;
@@ -17,6 +17,7 @@ interface AuthContextType {
     profile: Profile | null;
     loading: boolean;
     refreshProfile: () => Promise<void>;
+    supabase: SupabaseClient;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,13 +25,14 @@ const AuthContext = createContext<AuthContextType>({
     profile: null,
     loading: true,
     refreshProfile: async () => { },
+    supabase: null as any,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     const fetchProfile = useCallback(async (userId: string) => {
         try {
@@ -52,38 +54,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     useEffect(() => {
-        // 1. Initial Load
-        const initAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
+        let mounted = true;
 
-            if (currentUser) {
-                await fetchProfile(currentUser.id);
+        const initialize = async () => {
+            try {
+                // Get initial session
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!mounted) return;
+
+                const initialUser = session?.user ?? null;
+                setUser(initialUser);
+
+                if (initialUser) {
+                    await fetchProfile(initialUser.id);
+                } else {
+                    setProfile(null);
+                }
+            } catch (err) {
+                console.error("Auth init error:", err);
+            } finally {
+                if (mounted) setLoading(false);
             }
-            setLoading(false);
         };
 
-        initAuth();
+        initialize();
 
-        // 2. Auth Listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
+            if (!mounted) return;
 
-            if (currentUser) {
-                await fetchProfile(currentUser.id);
-            } else {
-                setProfile(null);
-            }
+            const currentUser = session?.user ?? null;
+
+            // Check if user actually changed to avoid redundant fetches
+            // We use the functional update or just rely on the session data
+            setUser(prevUser => {
+                if (currentUser?.id !== prevUser?.id) {
+                    if (currentUser) {
+                        fetchProfile(currentUser.id);
+                    } else {
+                        setProfile(null);
+                    }
+                }
+                return currentUser;
+            });
+
             setLoading(false);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, [supabase, fetchProfile]);
 
     return (
-        <AuthContext.Provider value={{ user, profile, loading, refreshProfile }}>
+        <AuthContext.Provider value={{ user, profile, loading, refreshProfile, supabase }}>
             {children}
         </AuthContext.Provider>
     );

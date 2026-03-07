@@ -8,8 +8,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LoginModal } from "@/components/auth/LoginModal";
-import { createClient } from "@/lib/supabase/client";
-import { type User } from "@supabase/supabase-js";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { Logo } from "@/components/Logo";
 
 const EXAMPLES = [
@@ -110,29 +109,16 @@ const USE_CASES = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [activeExample, setActiveExample] = useState(0);
-  const supabase = createClient();
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) router.push("/editor");
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase, router]);
+    // We already have user from context, but we want to handle the auto-redirect if signed in
+    if (user && !authLoading) {
+      router.push("/editor");
+    }
+  }, [user, authLoading, router]);
 
   const current = EXAMPLES[activeExample];
 
@@ -147,7 +133,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-               <Logo />
+            <Logo />
           </motion.div>
 
           <motion.div
@@ -163,7 +149,9 @@ export default function LandingPage() {
             >
               Pricing
             </Button>
-            {!user ? (
+            {authLoading ? (
+              <div className="w-24 h-11 bg-muted dark:bg-zinc-800 rounded-xl animate-pulse" />
+            ) : !user ? (
               <Button
                 variant="outline"
                 onClick={() => setIsLoginModalOpen(true)}
@@ -172,12 +160,7 @@ export default function LandingPage() {
                 Sign In
               </Button>
             ) : (
-              <Button
-                onClick={() => router.push("/editor")}
-                className="bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold rounded-xl px-6 h-11"
-              >
-                Open Editor
-              </Button>
+              <></>
             )}
           </motion.div>
         </nav>
@@ -186,7 +169,7 @@ export default function LandingPage() {
         <div className="mb-20 mt-8 flex flex-col lg:flex-row items-center gap-14">
           {/* Left — Copy */}
           <div className="flex-1 space-y-8">
-           
+
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -261,11 +244,10 @@ export default function LandingPage() {
                 <button
                   key={ex.id}
                   onClick={() => setActiveExample(i)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-t-lg transition-all ${
-                    activeExample === i
-                      ? "bg-zinc-900 border border-b-0 border-zinc-700 text-white"
-                      : "text-zinc-600 hover:text-zinc-400"
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-t-lg transition-all ${activeExample === i
+                    ? "bg-zinc-900 border border-b-0 border-zinc-700 text-white"
+                    : "text-zinc-600 hover:text-zinc-400"
+                    }`}
                 >
                   {ex.tag}
                 </button>
