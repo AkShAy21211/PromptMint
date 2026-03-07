@@ -18,10 +18,34 @@ const CONFLICT_MAP: Record<string, string[]> = {
     "Framer Motion": ["gsap", "animejs", "lottie", "velocity.js"],
     "GSAP": ["framer motion", "animejs", "lottie"],
     "AdonisJS": ["server components", "server-components", "jsx", "tsx", "nextjs", "spring boot"],
+    // Deployment
+    "Vercel": ["docker", "container", "aws", "amplify", "fly.io", "railway"],
+    "Netlify": ["docker", "container", "aws", "amplify", "fly.io", "railway"],
+    "AWS": ["vercel", "netlify", "fly.io", "railway", "render", "heroku"],
+    "Docker": ["vercel", "netlify", "render"],
+    "Render": ["vercel", "netlify", "aws", "docker", "heroku", "railway"],
+    "Heroku": ["render", "vercel", "netlify", "aws", "railway"],
+    "Cloudflare Pages": ["vercel", "netlify", "aws", "render"],
+    // Auth
+    "Clerk": ["nextauth", "authjs", "firebase auth", "firebase-auth", "custom jwt", "supabase auth", "auth0", "lucia", "keycloak"],
+    "Auth.js (NextAuth)": ["clerk", "firebase auth", "firebase-auth", "supabase auth", "auth0", "lucia"],
+    "Supabase Auth": ["clerk", "nextauth", "authjs", "firebase auth", "firebase-auth", "auth0", "lucia"],
+    "Firebase Auth": ["clerk", "nextauth", "authjs", "supabase auth", "auth0", "lucia"],
+    "Auth0": ["clerk", "nextauth", "authjs", "supabase auth", "firebase auth", "lucia", "keycloak", "okta"],
+    "AWS Cognito": ["clerk", "auth0", "supabase auth", "firebase auth", "lucia"],
+    "Lucia": ["clerk", "auth0", "nextauth", "authjs", "firebase auth", "supabase auth", "keycloak"],
+    // State
+    "Zustand": ["redux", "jotai", "recoil", "mobx", "valtio"],
+    "Redux Toolkit": ["zustand", "jotai", "recoil", "mobx", "valtio"],
+    "TanStack Query": ["swr", "rtk query", "apollo", "urql", "react query"],
+    "MobX": ["zustand", "redux", "jotai", "recoil", "valtio", "xstate"],
+    "Valtio": ["zustand", "redux", "mobx", "jotai", "recoil"],
+    "SWR": ["tanstack query", "react query", "apollo", "urql"],
+    "XState": ["redux", "mobx", "zustand"],
 };
 
 export interface Conflict {
-    type: "framework" | "database" | "api" | "styling";
+    type: "framework" | "database" | "api" | "styling" | "deployment" | "auth" | "state";
     selected: string;
     foundInText: string;
 }
@@ -99,8 +123,53 @@ export function detectConflicts(userIdea: string, stack: Stack): Conflict[] {
         for (const word of forbidden) {
             if (text.includes(word)) {
                 conflicts.push({
-                    type: "styling", // Grouping with styling for simplicity in types if needed, or keep as is
+                    type: "styling",
                     selected: stack.animation,
+                    foundInText: word,
+                });
+                break;
+            }
+        }
+    }
+
+    // 6. Check Deployment
+    if (stack.deployment && CONFLICT_MAP[stack.deployment]) {
+        const forbidden = CONFLICT_MAP[stack.deployment];
+        for (const word of forbidden) {
+            if (text.includes(word)) {
+                conflicts.push({
+                    type: "deployment",
+                    selected: stack.deployment,
+                    foundInText: word,
+                });
+                break;
+            }
+        }
+    }
+
+    // 7. Check Auth
+    if (stack.auth && CONFLICT_MAP[stack.auth]) {
+        const forbidden = CONFLICT_MAP[stack.auth];
+        for (const word of forbidden) {
+            if (text.includes(word)) {
+                conflicts.push({
+                    type: "auth",
+                    selected: stack.auth,
+                    foundInText: word,
+                });
+                break;
+            }
+        }
+    }
+
+    // 8. Check State Management
+    if (stack.stateManagement && CONFLICT_MAP[stack.stateManagement]) {
+        const forbidden = CONFLICT_MAP[stack.stateManagement];
+        for (const word of forbidden) {
+            if (text.includes(word)) {
+                conflicts.push({
+                    type: "state",
+                    selected: stack.stateManagement,
                     foundInText: word,
                 });
                 break;

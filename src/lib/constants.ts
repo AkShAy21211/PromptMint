@@ -5,6 +5,9 @@ import {
     LanguageType,
     StylingType,
     AnimationType,
+    DeploymentType,
+    AuthType,
+    StateManagementType,
 } from "./types";
 
 export const FREE_STACKS = {
@@ -14,6 +17,9 @@ export const FREE_STACKS = {
     language: ["TypeScript", "JavaScript"] as LanguageType[],
     styling: ["Tailwind CSS", "shadcn/ui"] as StylingType[],
     animation: ["Framer Motion", "None"] as AnimationType[],
+    deployment: ["None", "Vercel", "Netlify"] as DeploymentType[],
+    auth: ["None", "Clerk", "Supabase Auth"] as AuthType[],
+    stateManagement: ["None", "Context API"] as StateManagementType[],
 };
 
 export interface StackOption {
@@ -161,4 +167,66 @@ export const ALL_STACKS: Record<string, StackOption[]> = {
         { name: "LottieFiles", category: "Marketplace" },
         { name: "None", category: "Clean", isPopular: true },
     ],
+    deployment: [
+        // Your originals
+        { name: "None", category: "General", isPopular: true },
+        { name: "Vercel", category: "Cloud", isPopular: true },
+        { name: "Netlify", category: "Cloud", isPopular: true },
+        { name: "AWS", category: "Enterprise", isPopular: true },
+        { name: "Docker", category: "Container", isPopular: true },
+        { name: "Supabase", category: "Managed", isPopular: true },
+        { name: "Railway", category: "PaaS", isPopular: true },
+        { name: "Fly.io", category: "Edge", isPopular: true },
+
+        // NEW 2026 TOP (from dev surveys)[web:699][web:702]
+        { name: "Render", category: "PaaS", isPopular: true },      // Heroku killer
+        { name: "Heroku", category: "PaaS" },                      // Still prototyping king
+        { name: "Google Cloud Run", category: "Serverless" },      // Container auto-scale
+        { name: "DigitalOcean App Platform", category: "Cloud" },  // Dev-friendly
+        { name: "Azure Static Web Apps", category: "Enterprise" },
+        { name: "Cloudflare Pages", category: "Edge" },
+        { name: "Deno Deploy", category: "Edge" },
+        { name: "Northflank", category: "Enterprise" },            // Multi-cloud
+    ],
+
+    auth: [
+        // Your originals
+        { name: "None", category: "General", isPopular: true },
+        { name: "Clerk", category: "Managed", isPopular: true },
+        { name: "Auth.js (NextAuth)", category: "Flexible", isPopular: true },
+        { name: "Supabase Auth", category: "Managed", isPopular: true },
+        { name: "Firebase Auth", category: "Managed", isPopular: true },
+        { name: "Custom JWT", category: "Custom", isPopular: true },
+
+        // NEW 2026 TOP (enterprise + open source)[web:700][web:703][web:706]
+        { name: "Auth0", category: "Enterprise", isPopular: true },     // SSO king
+        { name: "AWS Cognito", category: "Enterprise", isPopular: true }, // Cheap scale
+        { name: "Lucia", category: "Open Source" },                     // Lightweight
+        { name: "Keycloak", category: "Open Source", isPopular: true }, // Self-hosted
+        { name: "Okta", category: "Enterprise" },
+        { name: "Passport.js", category: "Node.js" },
+        { name: "SuperTokens", category: "Open Source" },
+        { name: "Zitadel", category: "Open Source" },
+        { name: "Authentik", category: "Self-hosted" },
+    ]
+    ,
+    stateManagement: [
+        // Your originals
+        { name: "None", category: "General", isPopular: true },
+        { name: "Zustand", category: "Modern", isPopular: true },
+        { name: "TanStack Query", category: "Server State", isPopular: true },
+        { name: "Context API", category: "Native", isPopular: true },
+        { name: "Redux Toolkit", category: "Enterprise", isPopular: true },
+        { name: "Jotai", category: "Atomic", isPopular: true },
+
+        // NEW 2026 TOP (React ecosystem)[web:701][web:704][web:707]
+        { name: "MobX", category: "Reactive", isPopular: true },     // OOP style
+        { name: "Valtio", category: "Proxy", isPopular: true },     // Mutable state
+        { name: "Recoil", category: "Atomic" },                     // Facebook
+        { name: "React Query (v5)", category: "Server State" },     // TanStack rebrand
+        { name: "SWR", category: "Data Fetching" },                 // Vercel
+        { name: "XState", category: "Machines" },                   // Complex flows
+        { name: "Rematch", category: "Redux-like" },
+    ],
+
 };

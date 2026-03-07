@@ -63,6 +63,9 @@ export async function POST(req: NextRequest) {
         const VALID_LANGUAGES = ALL_STACKS.language.map(o => o.name);
         const VALID_STYLING = ALL_STACKS.styling.map(o => o.name);
         const VALID_ANIMATION = ALL_STACKS.animation.map(o => o.name);
+        const VALID_DEPLOYMENT = ALL_STACKS.deployment.map(o => o.name);
+        const VALID_AUTH = ALL_STACKS.auth.map(o => o.name);
+        const VALID_STATE = ALL_STACKS.stateManagement.map(o => o.name);
 
         if (stack.framework && !VALID_FRAMEWORKS.includes(stack.framework)) {
             return NextResponse.json(
@@ -100,6 +103,24 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
+        if (stack.deployment && !VALID_DEPLOYMENT.includes(stack.deployment)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid deployment selection." },
+                { status: 400 }
+            );
+        }
+        if (stack.auth && !VALID_AUTH.includes(stack.auth)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid auth selection." },
+                { status: 400 }
+            );
+        }
+        if (stack.stateManagement && !VALID_STATE.includes(stack.stateManagement)) {
+            return NextResponse.json(
+                { error: "INVALID_STACK", message: "Invalid state management selection." },
+                { status: 400 }
+            );
+        }
 
         // ── Usage Limit & Pro Validation ────────────────────────────────────────
 
@@ -128,8 +149,11 @@ export async function POST(req: NextRequest) {
                 const isInvalidLanguage = stack.language && !FREE_STACKS.language.includes(stack.language);
                 const isInvalidStyling = stack.styling && !FREE_STACKS.styling.includes(stack.styling);
                 const isInvalidAnimation = stack.animation && !FREE_STACKS.animation.includes(stack.animation);
+                const isInvalidDeployment = stack.deployment && !FREE_STACKS.deployment.includes(stack.deployment);
+                const isInvalidAuth = stack.auth && !FREE_STACKS.auth.includes(stack.auth);
+                const isInvalidState = stack.stateManagement && !FREE_STACKS.stateManagement.includes(stack.stateManagement);
 
-                if (isInvalidFramework || isInvalidDatabase || isInvalidApi || isInvalidLanguage || isInvalidStyling || isInvalidAnimation) {
+                if (isInvalidFramework || isInvalidDatabase || isInvalidApi || isInvalidLanguage || isInvalidStyling || isInvalidAnimation || isInvalidDeployment || isInvalidAuth || isInvalidState) {
                     return NextResponse.json(
                         { error: "PRO_REQUIRED", message: "One or more selected technologies require a Pro plan." },
                         { status: 403 }

@@ -137,6 +137,59 @@ export type ApiPatternType =
   | "Pub/Sub"
   | "Kafka Streams";
 
+// ─── Deployment (NEW) ────────────────────────────────────────────────────────
+export type DeploymentType =
+  | "None"
+  | "Vercel"
+  | "Netlify"
+  | "AWS"
+  | "Docker"
+  | "Supabase"
+  | "Railway"
+  | "Fly.io"
+  | "Render"
+  | "Heroku"
+  | "Google Cloud Run"
+  | "DigitalOcean App Platform"
+  | "Azure Static Web Apps"
+  | "Cloudflare Pages"
+  | "Deno Deploy"
+  | "Northflank";
+
+// ─── Authentication (NEW) ────────────────────────────────────────────────────
+export type AuthType =
+  | "None"
+  | "Clerk"
+  | "Auth.js (NextAuth)"
+  | "Supabase Auth"
+  | "Firebase Auth"
+  | "Custom JWT"
+  | "Auth0"
+  | "AWS Cognito"
+  | "Lucia"
+  | "Keycloak"
+  | "Okta"
+  | "Passport.js"
+  | "SuperTokens"
+  | "Zitadel"
+  | "Authentik";
+
+// ─── State Management (NEW) ──────────────────────────────────────────────────
+export type StateManagementType =
+  | "None"
+  | "Zustand"
+  | "TanStack Query"
+  | "Context API"
+  | "Redux Toolkit"
+  | "Jotai"
+  | "MobX"
+  | "Valtio"
+  | "Recoil"
+  | "React Query (v5)"
+  | "SWR"
+  | "XState"
+  | "Rematch";
+
 // ─── Goal Mode / Target Model (NEW, optional) ───────────────────────────────
 export type GoalMode =
   | "Scaffold"
@@ -180,6 +233,9 @@ export interface Stack {
   framework?: FrameworkType;
   database?: DatabaseType;
   apiPattern?: ApiPatternType;
+  deployment?: DeploymentType;
+  auth?: AuthType;
+  stateManagement?: StateManagementType;
 }
 
 export interface GenerationOptions {

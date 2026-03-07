@@ -12,6 +12,9 @@ import {
   LanguageType,
   StylingType,
   AnimationType,
+  DeploymentType,
+  AuthType,
+  StateManagementType,
 } from "@/lib/types";
 import { StackToggle } from "@/components/StackToggle";
 import { PromptHealth } from "@/components/PromptHealth";
@@ -21,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen } from "lucide-react";
+import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen, Layout, Server, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { PromptHistory } from "@/components/PromptHistory";
@@ -121,6 +124,9 @@ export default function EditorPage() {
     framework: "None",
     database: "None",
     apiPattern: "None",
+    deployment: "None",
+    auth: "None",
+    stateManagement: "None",
   });
   const [result, setResult] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +138,7 @@ export default function EditorPage() {
   const [targetModel, setTargetModel] = useState<TargetModel>("GPT");
   const [engineeringDefaults, setEngineeringDefaults] = useState<string[]>([]);
   const [isSavingRecipe, setIsSavingRecipe] = useState(false);
+  const [activeStackTab, setActiveStackTab] = useState<"architecture" | "infrastructure" | "visuals">("architecture");
   const [recipeRefreshTrigger, setRecipeRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
@@ -171,16 +178,18 @@ export default function EditorPage() {
     window.location.href = "/";
   };
 
-  const handleStackChange = <K extends keyof typeof FREE_STACKS>(
+  const handleStackChange = <K extends keyof typeof ALL_STACKS>(
     key: K,
     val: string,
   ) => {
-    const freeOptions = FREE_STACKS[key] as string[];
-    if (!isPro && !freeOptions.includes(val)) {
+    const freeOptions = FREE_STACKS[key as keyof typeof FREE_STACKS] as string[] | undefined;
+
+    // Check if the option is locked for free users (if key exists in FREE_STACKS)
+    if (!isPro && freeOptions && !freeOptions.includes(val)) {
       toast({
         title: "Pro Feature",
         description:
-          `Unlock all ${key} options and unlimited prompts with a Pro plan(₹149 / month, billed in INR via Razorpay).`,
+          `Unlock all ${key} options and unlimited prompts with a Pro plan (₹149 / month).`,
       });
       router.push("/pricing");
       return;
@@ -517,123 +526,217 @@ export default function EditorPage() {
 
             {/* Step 2: Stack */}
             <div className="space-y-4">
-              <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
-                Step 2: Refine Your Stack
-              </span>
-
-              <div className="rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 divide-y divide-border dark:divide-zinc-800/50 overflow-hidden">
-                {/* ── Framework / Runtime ── */}
-                <div className="p-5">
-                  <StackToggle
-                    label="Framework"
-                    options={ALL_STACKS.framework}
-                    selected={stack.framework ?? "None"}
-                    lockedOptions={
-                      isPro
-                        ? []
-                        : ALL_STACKS.framework
-                          .filter((o) => !FREE_STACKS.framework.includes(o.name as FrameworkType))
-                          .map((o) => o.name)
-                    }
-                    onChange={(val) => handleStackChange("framework", val)}
-                  />
-                </div>
-
-                {/* ── Database / ORM ── */}
-                <div className="p-5">
-                  <StackToggle
-                    label="Database / ORM"
-                    options={ALL_STACKS.database}
-                    selected={stack.database ?? "None"}
-                    lockedOptions={
-                      isPro
-                        ? []
-                        : ALL_STACKS.database
-                          .filter((o) => !FREE_STACKS.database.includes(o.name as DatabaseType))
-                          .map((o) => o.name)
-                    }
-                    onChange={(val) => handleStackChange("database", val)}
-                  />
-                </div>
-
-                {/* ── API Pattern ── */}
-                <div className="p-5">
-                  <StackToggle
-                    label="API Pattern"
-                    options={ALL_STACKS.apiPattern}
-                    selected={stack.apiPattern ?? "None"}
-                    lockedOptions={
-                      isPro
-                        ? []
-                        : ALL_STACKS.apiPattern
-                          .filter((o) => !FREE_STACKS.apiPattern.includes(o.name as ApiPatternType))
-                          .map((o) => o.name)
-                    }
-                    onChange={(val) => handleStackChange("apiPattern", val)}
-                  />
-                </div>
-
-                {/* ── Divider with label ── */}
-                <div className="px-5 py-2 bg-zinc-900/40">
-                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                    Frontend / UI
-                  </span>
-                </div>
-
-                {/* ── Language ── */}
-                <div className="p-5">
-                  <StackToggle
-                    label="Language"
-                    options={ALL_STACKS.language}
-                    selected={stack.language}
-                    lockedOptions={
-                      isPro
-                        ? []
-                        : ALL_STACKS.language
-                          .filter((o) => !FREE_STACKS.language.includes(o.name as LanguageType))
-                          .map((o) => o.name)
-                    }
-                    onChange={(val) => handleStackChange("language", val)}
-                  />
-                </div>
-
-                {/* ── Styling ── */}
-                <div className="p-5">
-                  <StackToggle
-                    label="Styling"
-                    options={ALL_STACKS.styling}
-                    selected={stack.styling}
-                    lockedOptions={
-                      isPro
-                        ? []
-                        : ALL_STACKS.styling
-                          .filter((o) => !FREE_STACKS.styling.includes(o.name as StylingType))
-                          .map((o) => o.name)
-                    }
-                    onChange={(val) => handleStackChange("styling", val)}
-                  />
-                </div>
-
-                {/* ── Animation ── */}
-                <div className="p-5">
-                  <StackToggle
-                    label="Animation"
-                    options={ALL_STACKS.animation}
-                    selected={stack.animation}
-                    lockedOptions={
-                      isPro
-                        ? []
-                        : ALL_STACKS.animation
-                          .filter((o) => !FREE_STACKS.animation.includes(o.name as AnimationType))
-                          .map((o) => o.name)
-                    }
-                    onChange={(val) =>
-                      handleStackChange("animation", val)
-                    }
-                  />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
+                  Step 2: Refine Your Stack
+                </span>
+                <div className="flex bg-zinc-900/50 p-1 rounded-xl border border-zinc-800/50">
+                  {[
+                    { id: "architecture", label: "Arch", icon: Server },
+                    { id: "infrastructure", label: "Infra", icon: Layout },
+                    { id: "visuals", label: "Visual", icon: Palette },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveStackTab(tab.id as "architecture" | "infrastructure" | "visuals")}
+                      className={cn(
+                        "relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                        activeStackTab === tab.id
+                          ? "text-white"
+                          : "text-zinc-500 hover:text-zinc-300"
+                      )}
+                    >
+                      {activeStackTab === tab.id && (
+                        <motion.div
+                          layoutId="activeStackTab"
+                          className="absolute inset-0 bg-violet-600 rounded-lg shadow-sm"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <tab.icon className="w-3 h-3 relative z-10" />
+                      <span className="relative z-10 hidden sm:inline">{tab.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
+              <div className="rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 overflow-hidden min-h-[400px]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeStackTab}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="divide-y divide-border dark:divide-zinc-800/50"
+                  >
+                    {activeStackTab === "architecture" && (
+                      <>
+                        {/* ── Framework / Runtime ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="Framework"
+                            options={ALL_STACKS.framework}
+                            selected={stack.framework ?? "None"}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.framework
+                                  .filter((o) => !FREE_STACKS.framework.includes(o.name as FrameworkType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("framework", val)}
+                          />
+                        </div>
+
+                        {/* ── Database / ORM ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="Database / ORM"
+                            options={ALL_STACKS.database}
+                            selected={stack.database ?? "None"}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.database
+                                  .filter((o) => !FREE_STACKS.database.includes(o.name as DatabaseType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("database", val)}
+                          />
+                        </div>
+
+                        {/* ── API Pattern ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="API Pattern"
+                            options={ALL_STACKS.apiPattern}
+                            selected={stack.apiPattern ?? "None"}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.apiPattern
+                                  .filter((o) => !FREE_STACKS.apiPattern.includes(o.name as ApiPatternType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("apiPattern", val)}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {activeStackTab === "infrastructure" && (
+                      <>
+                        {/* ── Deployment ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="Deployment"
+                            options={ALL_STACKS.deployment}
+                            selected={stack.deployment ?? "None"}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.deployment
+                                  .filter((o) => !FREE_STACKS.deployment.includes(o.name as DeploymentType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("deployment", val)}
+                          />
+                        </div>
+
+                        {/* ── Authentication ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="Authentication"
+                            options={ALL_STACKS.auth}
+                            selected={stack.auth ?? "None"}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.auth
+                                  .filter((o) => !FREE_STACKS.auth.includes(o.name as AuthType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("auth", val)}
+                          />
+                        </div>
+
+                        {/* ── State Management ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="State Management"
+                            options={ALL_STACKS.stateManagement}
+                            selected={stack.stateManagement ?? "None"}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.stateManagement
+                                  .filter((o) => !FREE_STACKS.stateManagement.includes(o.name as StateManagementType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("stateManagement", val)}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {activeStackTab === "visuals" && (
+                      <>
+                        {/* ── Language ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="Language"
+                            options={ALL_STACKS.language}
+                            selected={stack.language}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.language
+                                  .filter((o) => !FREE_STACKS.language.includes(o.name as LanguageType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("language", val)}
+                          />
+                        </div>
+
+                        {/* ── Styling ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="Styling"
+                            options={ALL_STACKS.styling}
+                            selected={stack.styling}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.styling
+                                  .filter((o) => !FREE_STACKS.styling.includes(o.name as StylingType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("styling", val)}
+                          />
+                        </div>
+
+                        {/* ── Animation ── */}
+                        <div className="p-5">
+                          <StackToggle
+                            label="Animation"
+                            options={ALL_STACKS.animation}
+                            selected={stack.animation}
+                            lockedOptions={
+                              isPro
+                                ? []
+                                : ALL_STACKS.animation
+                                  .filter((o) => !FREE_STACKS.animation.includes(o.name as AnimationType))
+                                  .map((o) => o.name)
+                            }
+                            onChange={(val) => handleStackChange("animation", val)}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
 
             {/* Step 3: Goal & Target Model */}

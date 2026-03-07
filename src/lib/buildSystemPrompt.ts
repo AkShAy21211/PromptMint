@@ -62,6 +62,21 @@ function buildStackEnforcement(stack: Stack, context: "frontend" | "backend" | "
     lines.push(`   - **API Pattern**: ${stack.apiPattern}`);
   }
 
+  // Deployment — always included if set
+  if (stack.deployment && stack.deployment !== "None") {
+    lines.push(`   - **Deployment / Hosting**: ${stack.deployment}`);
+  }
+
+  // Authentication — always included if set
+  if (stack.auth && stack.auth !== "None") {
+    lines.push(`   - **Authentication**: ${stack.auth}`);
+  }
+
+  // State Management — always included if set
+  if (stack.stateManagement && stack.stateManagement !== "None") {
+    lines.push(`   - **State Management**: ${stack.stateManagement}`);
+  }
+
   // Language — always included
   lines.push(`   - **Language**: ${stack.language}`);
 
@@ -281,7 +296,8 @@ ${defaultsBlock}
 1. **Adaptive Length**:
    - For simple tasks (e.g., "a blue button"), provide a **concise, punchy, and direct** instruction set.
    - For complex tasks, use the full CO-STAR structure with all relevant sections.
-2. **Tech Stack Enforcement** — The following selection is **ABSOLUTE**. You must strictly use ONLY these technologies and **completely ignore** any conflicting technology choices mentioned in the "User's Idea" below:
+2. **Literal Stack Enforcement Section**: You MUST add a section to your generated prompt titled "### STACK ENFORCEMENT" that lists the selected technologies below as absolute, non-negotiable constraints.
+3. **Tech Stack Enforcement** — The following selection is **ABSOLUTE**. You must strictly use ONLY these technologies and **completely ignore** any conflicting technology choices mentioned in the "User's Idea" below:
 ${stackEnforcement}
 
 ${conflicts.length > 0
