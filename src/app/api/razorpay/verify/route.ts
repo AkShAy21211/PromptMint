@@ -6,19 +6,30 @@ export async function POST(req: Request) {
     try {
         const {
             razorpay_order_id,
+            razorpay_subscription_id,
             razorpay_payment_id,
             razorpay_signature,
             planId
         } = await req.json();
 
         // 1. Verify Signature
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        // ── Order Signature: razorpay_order_id + "|" + razorpay_payment_id
+        // ── Subscription Signature: razorpay_payment_id + "|" + razorpay_subscription_id
+        const body = razorpay_subscription_id
+            ? `${razorpay_payment_id}|${razorpay_subscription_id}`
+            : `${razorpay_order_id}|${razorpay_payment_id}`;
+
         const expectedSignature = crypto
             .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-            .update(body.toString())
+            .update(body)
             .digest("hex");
 
         if (expectedSignature !== razorpay_signature) {
+            console.error("Signature Mismatch:", {
+                expected: expectedSignature,
+                received: razorpay_signature,
+                type: razorpay_subscription_id ? "subscription" : "order"
+            });
             return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
         }
 
@@ -37,6 +48,7 @@ export async function POST(req: Request) {
             .update({
                 plan_type: planId.includes("pro") ? "pro" : "lifetime",
                 is_pro: isPro,
+                razorpay_subscription_id: razorpay_subscription_id || null, // Store sub ID for future reference
             })
             .eq('id', user.id);
 

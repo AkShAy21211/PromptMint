@@ -68,7 +68,7 @@ export function LimitModal({ isOpen, onClose, onLogin, isGuest }: LimitModalProp
                                     className="w-full sm:w-auto h-14 px-8 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] active:scale-95 transition-all flex items-center justify-center gap-2"
                                 >
                                     <Sparkles className="w-5 h-5 text-violet-600" />
-                                    Upgrade to Pro <span className="text-zinc-500 font-normal ml-1">₹499</span >
+                                    Upgrade to Pro <span className="text-zinc-500 font-normal ml-1">₹149</span >
                                 </Button>
                                 {isGuest && (
                                     <Button

@@ -22,18 +22,15 @@ export async function POST(req: Request) {
 
         const event = JSON.parse(body);
 
-        // Handle successful payment
+        const supabase = createClient();
+
+        // ── Handle Order/Payment Events ────────────────────────────────────────
         if (event.event === "payment.captured") {
             const payment = event.payload.payment.entity;
-
-            // We need to fetch the order to get the notes (userId, planId)
-            // Alternatively, we can use the notes directly from the payment if they were passed
-            const userId = payment.notes.userId;
-            const planId = payment.notes.planId;
+            const userId = payment.notes?.userId;
+            const planId = payment.notes?.planId;
 
             if (userId && planId) {
-                const supabase = createClient();
-
                 const isPro = planId === "pro_monthly" || planId === "lifetime";
 
                 await supabase
@@ -44,8 +41,43 @@ export async function POST(req: Request) {
                         razorpay_customer_id: payment.customer_id || null,
                     })
                     .eq('id', userId);
+            }
+        }
 
-                console.log(`Updated user ${userId} to plan ${planId}`);
+        // ── Handle Subscription Events ──────────────────────────────────────────
+
+        // 1. Subscription Renewed/Charged
+        if (event.event === "subscription.charged") {
+            const subscription = event.payload.subscription.entity;
+            const userId = subscription.notes?.userId;
+
+            if (userId) {
+                await supabase
+                    .from('profiles')
+                    .update({
+                        is_pro: true,
+                        plan_type: "pro",
+                        razorpay_subscription_id: subscription.id,
+                        cancel_at_period_end: false, // Reset flag on successful charge
+                    })
+                    .eq('id', userId);
+            }
+        }
+
+        // 2. Subscription Cancelled/Halted
+        if (event.event === "subscription.cancelled" || event.event === "subscription.halted") {
+            const subscription = event.payload.subscription.entity;
+            const userId = subscription.notes?.userId;
+
+            if (userId) {
+                await supabase
+                    .from('profiles')
+                    .update({
+                        is_pro: false,
+                        plan_type: "free",
+                        cancel_at_period_end: false, // Reset flag when fully cancelled
+                    })
+                    .eq('id', userId);
             }
         }
 

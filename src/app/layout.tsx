@@ -50,6 +50,8 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { PHProvider } from "@/components/providers/PostHogProvider";
 import { BugReportButton } from "@/components/BugReportButton";
 
+import { AuthProvider } from "@/components/providers/AuthProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -69,7 +71,9 @@ export default function RootLayout({
           <BetaBanner enabled={true} dismissible={true} />
           <BugReportButton />
 
-          <PHProvider>{children}</PHProvider>
+          <PHProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </PHProvider>
         </ThemeProvider>
       </body>
     </html>

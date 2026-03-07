@@ -158,8 +158,8 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                                 </h2>
                                 <p className="text-muted-foreground text-sm mt-2">
                                     {isLogin
-                                        ? "Sign in to sync your prompts across all devices"
-                                        : "Create an account to unlock unlimited prompt history"}
+                                        ? "Sign in to sync your prompts and access Pro benefits"
+                                        : "Create an account to unlock history sync and premium features"}
                                 </p>
                             </div>
 
@@ -175,11 +175,10 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             onBlur={() => setEmailTouched(true)}
-                                            className={`w-full bg-zinc-100/50 dark:bg-white/5 border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition-all ${
-                                                emailError
+                                            className={`w-full bg-zinc-100/50 dark:bg-white/5 border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition-all ${emailError
                                                     ? "border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/50"
                                                     : "border-zinc-200 dark:border-white/10 focus:border-cyan-500/50 focus:ring-cyan-500/50"
-                                            }`}
+                                                }`}
                                             required
                                         />
                                     </div>

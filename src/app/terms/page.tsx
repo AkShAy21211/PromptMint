@@ -47,7 +47,7 @@ export default function TermsOfService() {
                     <section>
                         <h2>2. Subscriptions & Payments</h2>
                         <p>
-                            PromptMint operates on a subscription model (&quot;Pro&quot;) and a one-time purchase model (&quot;Lifetime&quot;). Pricing is listed as ₹149/mo (or equivalent).
+                            PromptMint operates on a recurring subscription model (&quot;Pro&quot;). Pricing is currently listed as ₹149/month.
                         </p>
                         <ul>
                             <li><strong>Taxes:</strong> All listed prices are exclusive of applicable GST unless stated otherwise. Applicable GST is automatically calculated and charged during checkout via Razorpay.</li>

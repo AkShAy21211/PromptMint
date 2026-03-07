@@ -58,6 +58,17 @@ export default function PricingPage() {
       return;
     }
 
+    // ── Pre-Checkout Validation ───────────────────────────────────────────
+    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+      toast({
+        title: "Configuration Error",
+        description: "Razorpay Key ID is missing. Please check your settings.",
+        variant: "destructive",
+      });
+      setLoading(null);
+      return;
+    }
+
     setLoading(tier.id);
 
     if (typeof window !== "undefined" && window.posthog) {
@@ -81,17 +92,24 @@ export default function PricingPage() {
 
       if (!res.ok) throw new Error(data.error || "Failed to create order");
 
+      const isSubscription = data.type === "subscription";
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: data.amount,
-        currency: data.currency,
+        // For Subscriptions, amount/currency MUST be omitted or the UI will crash
+        ...(isSubscription ? {} : {
+          amount: data.amount,
+          currency: data.currency,
+        }),
         name: "PromptMint Professional",
-        description: `${tier.name} Plan Subscription`,
+        description: `${tier.name} Plan ${isSubscription ? "Subscription" : "Upgrade"}`,
         image: "/icons/icon-192x192.png",
-        order_id: data.id,
+        // Dynamically set order_id or subscription_id
+        [isSubscription ? "subscription_id" : "order_id"]: data.id,
         handler: async function (response: {
           razorpay_payment_id: string;
-          razorpay_order_id: string;
+          razorpay_order_id?: string;
+          razorpay_subscription_id?: string;
           razorpay_signature: string;
         }) {
           try {

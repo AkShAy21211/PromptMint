@@ -25,11 +25,11 @@ import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen } from "l
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { LoginModal } from "@/components/auth/LoginModal";
-import { type User } from "@supabase/supabase-js";
 import { PromptHistory } from "@/components/PromptHistory";
 import { LimitModal } from "@/components/LimitModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { migrateLocalPrompts } from "@/lib/supabase/migration";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   FREE_STACKS,
   ALL_STACKS,
@@ -125,12 +125,10 @@ export default function EditorPage() {
   });
   const [result, setResult] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [promptCount, setPromptCount] = useState(0);
   const [isPro, setIsPro] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [goalMode, setGoalMode] = useState<GoalMode>("Production-ready");
   const [targetModel, setTargetModel] = useState<TargetModel>("GPT");
   const [engineeringDefaults, setEngineeringDefaults] = useState<string[]>([]);
@@ -138,98 +136,32 @@ export default function EditorPage() {
   const [recipeRefreshTrigger, setRecipeRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
+  const { user, profile, loading: authLoading } = useAuth();
   const supabase = createClient();
 
 
   // ─── Auth ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("usage_count, is_pro")
-            .eq("id", user.id)
-            .single();
-
-          if (profile) {
-            setPromptCount(profile.usage_count);
-            setIsPro(profile.is_pro);
-          }
-        } else {
-          const count = localStorage.getItem("guest_prompt_count");
-          setPromptCount(count ? parseInt(count) : 0);
-        }
-      } catch (error) {
-        console.error("[editor] Failed to initialize auth:", error);
-        const count = localStorage.getItem("guest_prompt_count");
-        setPromptCount(count ? parseInt(count) : 0);
-      } finally {
-        setIsInitialLoading(false);
+    if (user && profile) {
+      setPromptCount(profile.usage_count);
+      setIsPro(profile.is_pro);
+      if (profile.is_pro) {
+        migrateLocalPrompts(user.id);
       }
-    };
+    } else if (!authLoading) {
+      const count = localStorage.getItem("guest_prompt_count");
+      setPromptCount(count ? parseInt(count) : 0);
+      setIsPro(false);
+    }
+  }, [user, profile, authLoading]);
 
-    getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          let { data: profile } = await supabase
-            .from("profiles")
-            .select("usage_count, is_pro, plan_type")
-            .eq("id", session.user.id)
-            .maybeSingle();
-
-          if (!profile) {
-            const { data: newProfile, error: createError } = await supabase
-              .from("profiles")
-              .upsert({
-                id: session.user.id,
-                usage_count: 0,
-                is_pro: false,
-                plan_type: "free",
-              })
-              .select()
-              .single();
-
-            if (!createError) profile = newProfile;
-          }
-
-          if (profile) {
-            setPromptCount(profile.usage_count);
-            const unlimited =
-              profile.is_pro ||
-              profile.plan_type === "pro";
-            setIsPro(unlimited);
-
-            if (unlimited) {
-              await migrateLocalPrompts(session.user.id);
-            }
-          }
-        } else {
-          setIsPro(false);
-          const count = localStorage.getItem("guest_prompt_count");
-          setPromptCount(count ? parseInt(count) : 0);
-        }
-      } catch (error) {
-        console.error("Auth state change error:", error);
-        setIsPro(false);
-        const count = localStorage.getItem("guest_prompt_count");
-        setPromptCount(count ? parseInt(count) : 0);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+  // Handle local state sync on generation
+  useEffect(() => {
+    if (profile) {
+      setPromptCount(profile.usage_count);
+    }
+  }, [profile]);
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
@@ -469,8 +401,8 @@ export default function EditorPage() {
               </Button>
             </Link>
             {/* Usage Status */}
-            <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-muted/50 dark:bg-zinc-900/50 border border-border dark:border-zinc-800 rounded-full min-w-[140px] justify-center">
-              {isInitialLoading ? (
+            <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-muted/50 dark:bg-zinc-900/50 border border-border dark:border-zinc-800 rounded-full min-w-[140px] justify-center text-zinc-500">
+              {authLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-muted-foreground/30 dark:bg-zinc-700 animate-pulse" />
                   <div className="h-3 w-20 bg-muted dark:bg-zinc-800 rounded-md animate-pulse" />
@@ -511,7 +443,7 @@ export default function EditorPage() {
                           : "text-emerald-500",
                       )}
                     >
-                      {MAX_FREE - promptCount}/{MAX_FREE} PROMPTS LEFT
+                      {Math.max(0, MAX_FREE - promptCount)}/{MAX_FREE} PROMPTS LEFT
                     </span>
                   </div>
                   {promptCount >= MAX_FREE && (
@@ -526,7 +458,12 @@ export default function EditorPage() {
               )}
             </div>
 
-            {!user ? (
+            {authLoading ? (
+              <div className="flex gap-2">
+                <div className="w-11 h-11 bg-muted/50 rounded-xl animate-pulse" />
+                <div className="w-11 h-11 bg-muted/50 rounded-xl animate-pulse" />
+              </div>
+            ) : !user ? (
               <Button
                 variant="outline"
                 onClick={() => setIsLoginModalOpen(true)}

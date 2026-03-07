@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
-import { type User } from "@supabase/supabase-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -25,72 +25,87 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
 
-interface UserProfile {
-  usage_count: number;
-  plan_type: string;
-  is_pro: boolean;
-  [key: string]: unknown;
-}
 
 export default function AccountPageClient() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { user, profile, loading: authLoading } = useAuth();
   const [recipeCount, setRecipeCount] = useState(0);
   const [historyCount, setHistoryCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [isCancelling, setIsCancelling] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session?.user) {
-        router.push("/");
-        return;
-      }
+    if (!user) {
+      if (!authLoading) router.push("/");
+      return;
+    }
 
-      setUser(session.user);
-
+    const fetchCounts = async () => {
       try {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-
-        if (!profileError) {
-          setProfile(profileData as UserProfile);
-        }
-
-        // Fetch Library Stats
-        const [recipesRes, historyRes] = await Promise.all([
-          supabase.from("prompt_recipes").select("id", { count: "exact" }).eq("user_id", session.user.id),
-          supabase.from("prompts").select("id", { count: "exact" }).eq("user_id", session.user.id),
+        const [recipes, history] = await Promise.all([
+          supabase
+            .from("prompt_recipes")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id),
+          supabase
+            .from("prompt_history_new")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
         ]);
 
-        setRecipeCount(recipesRes.count ?? 0);
-        setHistoryCount(historyRes.count ?? 0);
+        setRecipeCount(recipes.count || 0);
+        setHistoryCount(history.count || 0);
       } catch (error) {
-        console.error("Error fetching account data:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching counts:", error);
       }
+    };
 
-      if (searchParams?.get("sync")) {
-        toast({
-          title: "Dashboard Synchronized",
-          description: "Your plan status and usage have been updated.",
-        });
-      }
-    });
+    fetchCounts();
 
-    return () => subscription.unsubscribe();
-  }, [supabase, router, searchParams, toast]);
+    if (searchParams?.get("sync")) {
+      toast({
+        title: "Dashboard Synchronized",
+        description: "Your plan status and usage have been updated.",
+      });
+    }
+  }, [user, authLoading, router, searchParams, toast, supabase]);
 
-  if (loading) {
+  const handleCancelSubscription = async () => {
+    if (!window.confirm("Are you sure you want to cancel your Pro subscription? Your autopay will stop, but you will keep Pro access until the end of your current billing period.")) {
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      const response = await fetch("/api/razorpay/cancel", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "Failed to cancel subscription");
+
+      toast({
+        title: "Subscription Cancelled",
+        description: "Your autopay has been stopped. You will keep your Pro benefits until the end of the current cycle.",
+      });
+
+      // Refresh profile to reflect any status changes if needed
+      // (Though the webhook will be the ultimate source of truth later)
+    } catch (error) {
+      toast({
+        title: "Cancellation Failed",
+        description: error instanceof Error ? error.message : "An error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
@@ -105,6 +120,7 @@ export default function AccountPageClient() {
   );
   const isPro =
     profile?.plan_type === "pro";
+  const isCancelled = profile?.cancel_at_period_end === true;
 
   return (
     <main className="min-h-screen bg-background text-foreground selection:bg-violet-500/30">
@@ -248,7 +264,7 @@ export default function AccountPageClient() {
                 <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center border border-violet-500/20 text-violet-500">
                   <CreditCard className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold">Membership Plan</h3>
+                <h3 className="text-lg font-bold">Plan & Billing</h3>
               </div>
 
               <div className="space-y-1">
@@ -260,8 +276,8 @@ export default function AccountPageClient() {
                 </p>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {isPro
-                    ? "Thank you for supporting PromptMint. You have full access to all professional features."
-                    : "You are currently on the baseline tier. Upgrade to unlock the full potential of PromptMint."}
+                    ? "Thank you for supporting PromptMint. You have full access to unlimited prompts, all engineering stacks, and cloud-synced history."
+                    : "You are currently on the baseline tier. Upgrade to unlock unlimited prompts, recurring autopay, and priority support."}
                 </p>
               </div>
             </div>
@@ -272,6 +288,22 @@ export default function AccountPageClient() {
                 className="w-full h-14 mt-8 bg-foreground text-background hover:bg-foreground/90 font-bold rounded-2xl transition-all"
               >
                 View Plans
+              </Button>
+            )}
+
+            {isPro && profile?.razorpay_subscription_id && (
+              <Button
+                variant="outline"
+                onClick={handleCancelSubscription}
+                disabled={isCancelling || isCancelled}
+                className={cn(
+                  "w-full h-14 mt-8 font-bold rounded-2xl transition-all",
+                  isCancelled
+                    ? "border-amber-500/20 text-amber-500 bg-amber-500/5 cursor-default hover:bg-amber-500/5"
+                    : "border-rose-500/20 text-rose-500 hover:bg-rose-500/10"
+                )}
+              >
+                {isCancelling ? "Cancelling..." : isCancelled ? "Autopay Off (Ends soon)" : "Cancel Subscription"}
               </Button>
             )}
           </motion.div>
