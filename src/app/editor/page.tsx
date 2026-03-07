@@ -530,7 +530,7 @@ export default function EditorPage() {
                 <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
                   Step 2: Refine Your Stack
                 </span>
-                <div className="flex bg-zinc-900/50 p-1 rounded-xl border border-zinc-800/50">
+                <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800/50">
                   {[
                     { id: "architecture", label: "Arch", icon: Server },
                     { id: "infrastructure", label: "Infra", icon: Layout },
@@ -543,7 +543,7 @@ export default function EditorPage() {
                         "relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
                         activeStackTab === tab.id
                           ? "text-white"
-                          : "text-zinc-500 hover:text-zinc-300"
+                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                       )}
                     >
                       {activeStackTab === tab.id && (
@@ -560,7 +560,7 @@ export default function EditorPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 overflow-hidden min-h-[400px]">
+              <div className="rounded-2xl bg-white/50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/50 overflow-hidden min-h-[400px]">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeStackTab}

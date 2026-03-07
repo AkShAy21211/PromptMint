@@ -57,7 +57,7 @@ export function StackToggle({
                 placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-zinc-900/50 border border-zinc-800 rounded-lg py-1 pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500/50 w-32 sm:w-40 transition-all placeholder:text-zinc-600"
+                className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1 pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500/50 w-32 sm:w-40 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600 outline-none"
               />
             </div>
           </div>
@@ -74,8 +74,8 @@ export function StackToggle({
               className={cn(
                 "px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border",
                 activeCategory === cat
-                  ? "bg-violet-500/10 text-violet-400 border-violet-500/30"
-                  : "bg-transparent text-zinc-500 border-transparent hover:text-zinc-400"
+                  ? "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30"
+                  : "bg-transparent text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-400"
               )}
             >
               {cat}
@@ -104,17 +104,17 @@ export function StackToggle({
                 className={cn(
                   "relative px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5",
                   isLocked
-                    ? "bg-transparent text-zinc-600 border-zinc-900 hover:border-violet-500/20 hover:bg-violet-500/5 cursor-pointer"
+                    ? "bg-transparent text-zinc-500 dark:text-zinc-600 border-zinc-200 dark:border-zinc-900 hover:border-violet-500/20 hover:bg-violet-500/5 cursor-pointer"
                     : isSelected
-                      ? "bg-violet-600 text-white border-violet-500 shadow-md shadow-violet-900/30 ring-2 ring-violet-500/20"
-                      : "bg-zinc-900/40 text-zinc-400 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-800/60",
-                  option.isPopular && !isSelected && !isLocked && "border-zinc-700/50"
+                      ? "bg-violet-600 text-white border-violet-500 shadow-md shadow-violet-500/20 dark:shadow-violet-900/30 ring-2 ring-violet-500/20"
+                      : "bg-zinc-100/80 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60",
+                  option.isPopular && !isSelected && !isLocked && "border-zinc-300 dark:border-zinc-700/50"
                 )}
               >
                 {isLocked ? (
-                  <Lock className="w-2.5 h-2.5 text-zinc-700" />
+                  <Lock className="w-2.5 h-2.5 text-zinc-400 dark:text-zinc-700" />
                 ) : option.isPopular && !isSelected ? (
-                  <div className="w-1 h-1 rounded-full bg-violet-400/50" />
+                  <div className="w-1 h-1 rounded-full bg-violet-400" />
                 ) : null}
 
                 <span>{option.name}</span>
