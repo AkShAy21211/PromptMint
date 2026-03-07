@@ -20,13 +20,7 @@ interface AuthContextType {
     supabase: SupabaseClient;
 }
 
-const AuthContext = createContext<AuthContextType>({
-    user: null,
-    profile: null,
-    loading: true,
-    refreshProfile: async () => { },
-    supabase: null as any,
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -113,4 +107,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};
