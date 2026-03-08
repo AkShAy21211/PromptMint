@@ -73,7 +73,7 @@ export function BugReportButton() {
                         Found a bug?
                       </p>
                       <p className="text-[10px] text-amber-400/80 font-medium mt-0.5 uppercase tracking-widest">
-                        Beta · Until Mar 12
+                        Founding Reporter Rewards
                       </p>
                     </div>
                   </div>
@@ -97,7 +97,7 @@ export function BugReportButton() {
                     <span className="font-bold text-white">
                       3 months Pro free
                     </span>{" "}
-                    at launch.
+                    as a Founding Reporter.
                   </p>
                 </div>
 
@@ -137,10 +137,9 @@ export function BugReportButton() {
           className={`
             group relative flex items-center gap-2 h-10 rounded-full border
             transition-all duration-300 shadow-lg
-            ${
-              isOpen
-                ? "px-4 bg-white/10 border-white/20 text-white"
-                : "px-4 bg-[#0f0f0f]/90 border-white/10 text-white/60 hover:text-white hover:border-amber-500/40 hover:bg-[#0f0f0f]"
+            ${isOpen
+              ? "px-4 bg-white/10 border-white/20 text-white"
+              : "px-4 bg-[#0f0f0f]/90 border-white/10 text-white/60 hover:text-white hover:border-amber-500/40 hover:bg-[#0f0f0f]"
             }
           `}
         >
@@ -150,9 +149,8 @@ export function BugReportButton() {
           )}
 
           <Bug
-            className={`w-3.5 h-3.5 transition-colors duration-200 ${
-              isOpen ? "text-amber-400" : "text-white/50 group-hover:text-amber-400"
-            }`}
+            className={`w-3.5 h-3.5 transition-colors duration-200 ${isOpen ? "text-amber-400" : "text-white/50 group-hover:text-amber-400"
+              }`}
           />
           <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap">
             {isOpen ? "Close" : "Report Bug"}

@@ -178,7 +178,7 @@ export default function AccountPageClient() {
                 {(profile?.plan_type ?? "FREE").toUpperCase()} MEMBERSHIP
               </span>
               <span className="text-[10px] text-muted-foreground/70 font-medium">
-                Beta · Early-supporter pricing in INR via Razorpay
+                Official Release · Early-supporter pricing in INR
               </span>
             </div>
           </div>
@@ -367,7 +367,7 @@ export default function AccountPageClient() {
               You&apos;re helping us build the future of prompting.
             </h2>
             <p className="text-muted-foreground max-w-lg leading-relaxed">
-              As a beta user, you have early access to our experimental model flavors. Learn how to maximize your <span className="text-foreground font-bold">{profile?.plan_type === 'pro' ? 'Pro' : 'Free'}</span> account with our industrial-grade guide.
+              As an early adopter, you have access to our optimized model flavors. Learn how to maximize your <span className="text-foreground font-bold">{profile?.plan_type === 'pro' ? 'Pro' : 'Free'}</span> account with our industrial-grade guide.
             </p>
             <Link href="/guide">
               <Button className="rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold px-8 h-12">

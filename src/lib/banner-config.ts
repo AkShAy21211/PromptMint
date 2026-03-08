@@ -13,7 +13,7 @@ export interface BannerConfig {
 
 export const BANNER_CONFIG: Record<string, BannerConfig> = {
   beta: {
-    enabled: true, // Toggle this to enable/disable the beta banner
+    enabled: false, // Toggle this to enable/disable the beta banner
     type: "beta",
     dismissible: true,
     storageDismissKey: "promptmint_beta_banner_dismissed",

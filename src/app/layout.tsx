@@ -68,7 +68,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <BetaBanner enabled={true} dismissible={true} />
+          <BetaBanner enabled={false} dismissible={true} />
           <BugReportButton />
 
           <PHProvider>
