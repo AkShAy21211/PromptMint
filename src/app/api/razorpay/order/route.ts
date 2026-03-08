@@ -8,6 +8,15 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
 
+interface RazorpayError {
+    message: string;
+    error?: {
+        code?: string;
+        description?: string;
+        metadata?: Record<string, unknown>;
+    };
+}
+
 export async function POST(req: Request) {
     try {
         const supabase = createClient();
@@ -84,11 +93,12 @@ export async function POST(req: Request) {
                     amount: plan.priceNumeric * 100,
                     currency: "INR"
                 });
-            } catch (subError: any) {
-                console.error("Razorpay Subscription Error:", subError);
+            } catch (subError: unknown) {
+                const error = subError as RazorpayError;
+                console.error("Razorpay Subscription Error:", error);
 
                 // If it's a customer id error, try creating without customer_id
-                if (customerId && subError.error?.description?.includes("id") && subError.error?.description?.includes("exist")) {
+                if (customerId && error.error?.description?.includes("id") && error.error?.description?.includes("exist")) {
                     console.warn(`Customer ID ${customerId} seems invalid, retrying without it.`);
                     const fallbackOptions = { ...subscriptionOptions, customer_id: undefined };
                     const subscription = await razorpay.subscriptions.create(fallbackOptions) as { id: string };
@@ -103,7 +113,7 @@ export async function POST(req: Request) {
                         currency: "INR"
                     });
                 }
-                throw subError;
+                throw error;
             }
         }
 
@@ -124,11 +134,13 @@ export async function POST(req: Request) {
                 ...order,
                 type: "order"
             });
-        } catch (orderError: any) {
-            console.error("Razorpay Order Creation Error:", orderError);
-            throw orderError;
+        } catch (orderError: unknown) {
+            const error = orderError as RazorpayError;
+            console.error("Razorpay Order Creation Error:", error);
+            throw error;
         }
-    } catch (error: any) {
+    } catch (err: unknown) {
+        const error = err as RazorpayError;
         console.error("Top-level Razorpay Order Error Detail:", {
             message: error.message,
             description: error.error?.description,
