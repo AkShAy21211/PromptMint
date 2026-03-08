@@ -76,13 +76,35 @@ export async function POST(req: Request) {
                 },
             };
 
-            const subscription = await razorpay.subscriptions.create(subscriptionOptions) as { id: string };
-            return NextResponse.json({
-                id: subscription.id,
-                type: "subscription",
-                amount: plan.priceNumeric * 100,
-                currency: "INR"
-            });
+            try {
+                const subscription = await razorpay.subscriptions.create(subscriptionOptions) as { id: string };
+                return NextResponse.json({
+                    id: subscription.id,
+                    type: "subscription",
+                    amount: plan.priceNumeric * 100,
+                    currency: "INR"
+                });
+            } catch (subError: any) {
+                console.error("Razorpay Subscription Error:", subError);
+
+                // If it's a customer id error, try creating without customer_id
+                if (customerId && subError.error?.description?.includes("id") && subError.error?.description?.includes("exist")) {
+                    console.warn(`Customer ID ${customerId} seems invalid, retrying without it.`);
+                    const fallbackOptions = { ...subscriptionOptions, customer_id: undefined };
+                    const subscription = await razorpay.subscriptions.create(fallbackOptions) as { id: string };
+
+                    // Clear the invalid customer ID from profile
+                    await supabase.from('profiles').update({ razorpay_customer_id: null }).eq('id', user.id);
+
+                    return NextResponse.json({
+                        id: subscription.id,
+                        type: "subscription",
+                        amount: plan.priceNumeric * 100,
+                        currency: "INR"
+                    });
+                }
+                throw subError;
+            }
         }
 
         // ── One-time Order Flow (Lifetime/Other) ──────────────────────────────────
@@ -96,13 +118,26 @@ export async function POST(req: Request) {
             },
         };
 
-        const order = await razorpay.orders.create(options);
-        return NextResponse.json({
-            ...order,
-            type: "order"
+        try {
+            const order = await razorpay.orders.create(options);
+            return NextResponse.json({
+                ...order,
+                type: "order"
+            });
+        } catch (orderError: any) {
+            console.error("Razorpay Order Creation Error:", orderError);
+            throw orderError;
+        }
+    } catch (error: any) {
+        console.error("Top-level Razorpay Order Error Detail:", {
+            message: error.message,
+            description: error.error?.description,
+            code: error.error?.code,
+            metadata: error.error?.metadata
         });
-    } catch (error: unknown) {
-        console.error("Razorpay Order Error:", error);
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Order creation failed" }, { status: 500 });
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : "Order creation failed",
+            detail: error.error?.description
+        }, { status: 500 });
     }
 }
