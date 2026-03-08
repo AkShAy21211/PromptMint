@@ -36,25 +36,7 @@ export const pricingTiers = [
         ],
         isPopular: true,
     },
-    {
-        id: "test_plan",
-        name: "Pro",
-        price: "₹1",
-        priceNumeric: 1,
-        razorpay_plan_id: process.env.NEXT_PUBLIC_RAZORPAY_PRO_PLAN_ID,
-        description: "The sweet spot for active developers and prompt engineers.",
-        features: [
-            "Unlimited prompts each month",
-            "1-Click 'Prompt Recipes' & Templates",
-            "All Backend/Frontend Stacks Unlocked",
-            "Opinionated Engineering Defaults (Strict JS, a11y, etc.)",
-            "Cloud-synced History with Tags & Search",
-            "Autopay Billing (GPay, PhonePe, Cards)",
-            "Flexible Cancellation (Keep access until period ends)",
-            "Priority Support",
-        ],
-        isPopular: true,
-    }
+    
     // {
     //     id: "lifetime",
     //     name: "Lifetime",
