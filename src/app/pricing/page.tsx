@@ -232,8 +232,9 @@ export default function PricingPage() {
             animate={{ opacity: 1, y: 0 }}
           >
             <span className="px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-3 inline-block">
-              Live Now · Early-supporter Pricing
+              Premium Engineering · Production Ready
             </span>
+
             <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-[0.2em] mb-3">
               Pricing in INR · Secure Payments via Razorpay
             </p>

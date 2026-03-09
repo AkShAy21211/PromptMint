@@ -178,8 +178,9 @@ export default function AccountPageClient() {
                 {(profile?.plan_type ?? "FREE").toUpperCase()} MEMBERSHIP
               </span>
               <span className="text-[10px] text-muted-foreground/70 font-medium">
-                Official Release · Early-supporter pricing in INR
+                Official Release · Active Subscription
               </span>
+
             </div>
           </div>
         </header>
@@ -353,30 +354,7 @@ export default function AccountPageClient() {
           </motion.div>
         </div>
 
-        {/* Beta Supporter Section */}
-        <section className="bg-gradient-to-br from-violet-600/10 via-background to-cyan-600/10 border border-violet-500/20 rounded-[2.5rem] p-10 relative overflow-hidden mb-12">
-          <div className="absolute top-0 right-0 p-4">
-            <Shield className="w-20 h-20 text-violet-500/10 -rotate-12" />
-          </div>
-          <div className="relative z-10 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 text-violet-500 text-[10px] font-bold uppercase tracking-widest">
-              <Sparkles className="w-3 h-3" />
-              Early Adopter Advantage
-            </div>
-            <h2 className="text-2xl md:text-3xl font-black max-w-md leading-tight">
-              You&apos;re helping us build the future of prompting.
-            </h2>
-            <p className="text-muted-foreground max-w-lg leading-relaxed">
-              As an early adopter, you have access to our optimized model flavors. Learn how to maximize your <span className="text-foreground font-bold">{profile?.plan_type === 'pro' ? 'Pro' : 'Free'}</span> account with our industrial-grade guide.
-            </p>
-            <Link href="/guide">
-              <Button className="rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold px-8 h-12">
-                <BookOpen className="w-4 h-4 mr-2" />
-                Read the Playbook
-              </Button>
-            </Link>
-          </div>
-        </section>
+
 
         {/* Help & Support Section */}
         <section className="bg-card/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border dark:border-white/5 p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-8 mb-12 group hover:border-emerald-500/30 transition-all">

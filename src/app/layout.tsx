@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { BetaBanner } from "@/components/BetaBanner";
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -68,7 +68,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <BetaBanner enabled={false} dismissible={true} />
+
           <BugReportButton />
 
           <PHProvider>

@@ -68,14 +68,13 @@ export function BugReportButton() {
                     <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center">
                       <Bug className="w-3.5 h-3.5 text-amber-400" />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-white leading-none">
-                        Found a bug?
-                      </p>
-                      <p className="text-[10px] text-amber-400/80 font-medium mt-0.5 uppercase tracking-widest">
-                        Founding Reporter Rewards
-                      </p>
-                    </div>
+                    <p className="text-sm font-bold text-white leading-none">
+                      Found a bug?
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-medium mt-0.5 uppercase tracking-widest">
+                      Help us improve
+                    </p>
+
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
@@ -86,20 +85,7 @@ export function BugReportButton() {
                   </button>
                 </div>
 
-                {/* Reward callout */}
-                <div className="rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 px-3 py-2.5 mb-3">
-                  <p className="text-xs text-white/80 leading-snug">
-                    🏆{" "}
-                    <span className="font-black text-emerald-400">
-                      First 10 reporters
-                    </span>{" "}
-                    get{" "}
-                    <span className="font-bold text-white">
-                      3 months Pro free
-                    </span>{" "}
-                    as a Founding Reporter.
-                  </p>
-                </div>
+
 
                 {/* Description */}
                 <p className="text-xs text-white/40 leading-relaxed mb-4">
@@ -143,10 +129,7 @@ export function BugReportButton() {
             }
           `}
         >
-          {/* Subtle pulse ring — only when closed */}
-          {!isOpen && (
-            <span className="absolute inset-0 rounded-full animate-ping opacity-[0.08] bg-amber-400 pointer-events-none" />
-          )}
+
 
           <Bug
             className={`w-3.5 h-3.5 transition-colors duration-200 ${isOpen ? "text-amber-400" : "text-white/50 group-hover:text-amber-400"
@@ -156,8 +139,7 @@ export function BugReportButton() {
             {isOpen ? "Close" : "Report Bug"}
           </span>
 
-          {/* Live beta dot */}
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+
         </motion.button>
       </div>
     </>
