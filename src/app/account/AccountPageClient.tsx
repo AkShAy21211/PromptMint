@@ -12,8 +12,6 @@ import {
   ArrowLeft,
   LogOut,
   Sparkles,
-  Shield,
-  BookOpen,
   MessageCircle,
   BarChart3,
   Save,
