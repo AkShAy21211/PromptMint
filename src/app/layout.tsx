@@ -49,6 +49,7 @@ export const metadata: Metadata = {
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { PHProvider } from "@/components/providers/PostHogProvider";
 import { BugReportButton } from "@/components/BugReportButton";
+import { Toaster } from "@/components/ui/toaster";
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
@@ -70,6 +71,7 @@ export default function RootLayout({
         >
 
           <BugReportButton />
+          <Toaster />
 
           <PHProvider>
             <AuthProvider>{children}</AuthProvider>

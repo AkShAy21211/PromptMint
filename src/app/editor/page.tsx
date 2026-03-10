@@ -22,7 +22,6 @@ import { PromptOutput } from "@/components/PromptOutput";
 import { PromptRecipes } from "@/components/PromptRecipes";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen, Layout, Server, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -1031,7 +1030,6 @@ export default function EditorPage() {
         }}
         isGuest={!user}
       />
-      <Toaster />
     </main>
   );
 }
