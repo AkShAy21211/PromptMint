@@ -11,8 +11,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "No signature" }, { status: 400 });
         }
 
+        const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+        if (!secret) {
+            console.error("RAZORPAY_WEBHOOK_SECRET is not defined");
+            return NextResponse.json({ error: "Configuration error" }, { status: 500 });
+        }
+
         const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET!)
+            .createHmac("sha256", secret)
             .update(body)
             .digest("hex");
 
@@ -21,8 +27,30 @@ export async function POST(req: Request) {
         }
 
         const event = JSON.parse(body);
+        const eventId = event.id; // Unique ID for this webhook event from Razorpay
 
         const supabase = createClient();
+
+        // 1. Idempotency Check: See if we've already processed this event
+        const { data: existingEvent } = await supabase
+            .from('razorpay_webhook_events')
+            .select('status')
+            .eq('event_id', eventId)
+            .single();
+
+        if (existingEvent && existingEvent.status === 'processed') {
+            return NextResponse.json({ status: "ok", message: "Duplicate event skipped" });
+        }
+
+        // 2. Initial Logging: Record the event as processing
+        if (!existingEvent) {
+            await supabase.from('razorpay_webhook_events').insert({
+                event_id: eventId,
+                type: event.event,
+                payload: event,
+                status: 'processing'
+            });
+        }
 
         // ── Handle Order/Payment Events ────────────────────────────────────────
         if (event.event === "payment.captured") {
@@ -64,7 +92,22 @@ export async function POST(req: Request) {
             }
         }
 
-        // 2. Subscription Cancelled/Halted
+        // 2. Subscription Updated (e.g., cancelled at period end)
+        if (event.event === "subscription.updated") {
+            const subscription = event.payload.subscription.entity;
+            const userId = subscription.notes?.userId;
+
+            if (userId) {
+                await supabase
+                    .from('profiles')
+                    .update({
+                        cancel_at_period_end: !!subscription.cancel_at_period_end,
+                    })
+                    .eq('id', userId);
+            }
+        }
+
+        // 3. Subscription Cancelled/Halted
         if (event.event === "subscription.cancelled" || event.event === "subscription.halted") {
             const subscription = event.payload.subscription.entity;
             const userId = subscription.notes?.userId;
@@ -81,9 +124,36 @@ export async function POST(req: Request) {
             }
         }
 
+        // 3. Final Logging: Mark as processed
+        await supabase
+            .from('razorpay_webhook_events')
+            .update({ status: 'processed' })
+            .eq('event_id', eventId);
+
         return NextResponse.json({ status: "ok" });
     } catch (error: unknown) {
         console.error("Razorpay Webhook Error:", error);
+
+        const supabase = createClient();
+        // Try to log the failure in the database using the eventId we attempted to extract
+        try {
+            const bodyText = await req.clone().text().catch(() => ""); // Fallback if clone fails
+            const event = bodyText ? JSON.parse(bodyText) : null;
+            const errEventId = event?.id;
+
+            if (errEventId) {
+                await supabase
+                    .from('razorpay_webhook_events')
+                    .upsert({
+                        event_id: errEventId,
+                        status: 'failed',
+                        error_message: error instanceof Error ? error.message : "Internal error"
+                    }, { onConflict: 'event_id' });
+            }
+        } catch (logError) {
+            console.error("Failed to log webhook error into DB:", logError);
+        }
+
         return NextResponse.json({ error: error instanceof Error ? error.message : "Webhook processing failed" }, { status: 500 });
     }
 }

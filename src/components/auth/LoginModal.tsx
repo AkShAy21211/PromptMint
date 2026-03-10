@@ -150,9 +150,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
 
                             {/* Header */}
                             <div className="flex flex-col items-center text-center mb-8">
-                                <div className="w-16 h-16 bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-white/10 rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-cyan-500/10">
-                                    <Sparkles className="w-8 h-8 text-cyan-500" />
-                                </div>
+                              
                                 <h2 className="text-2xl font-bold text-foreground tracking-tight">
                                     {isLogin ? "Welcome Back" : "Start Building"}
                                 </h2>
