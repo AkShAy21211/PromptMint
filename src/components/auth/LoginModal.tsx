@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { X, Mail, Lock, Loader2, Sparkles, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { X, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import GoogleSignInButton from "./GoogleSignInButton";
 
 interface LoginModalProps {
