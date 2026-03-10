@@ -1,0 +1,59 @@
+# PromptMint: Zero-Budget Validation & Maintenance Guide
+
+Since you just launched and are in the **"Validation Phase"**, your priority is not scaling, but **surviving on zero budget** while checking if users find the app useful.
+
+---
+
+## 1. Zero-Budget Strategy (Current State)
+Your current stack is perfectly chosen for a "zero-cost" start:
+- **Supabase**: Free tier is generous (500MB DB).
+- **Gemini API**: Pay-as-you-go is extremely cheap (₹0.00x per prompt).
+- **Vercel**: Free tier for personal projects.
+- **PostHog**: Free for the first 1M events.
+
+---
+
+## 2. Low-Cost Priority List (Top Actions)
+
+### A. AI Cost Protection (Crucial)
+To prevent someone from running a bot and costing you money:
+- **Constraint**: Strict `max_tokens` and character limits on user input (e.g., max 2000 characters).
+- **Guest Limits**: Keep your current 5-prompt limit for guests strict.
+- **Cost**: **₹0**.
+
+### B. Reliable Revenue Tracking
+- **Harden Razorpay Webhooks**: Ensure that when someone *does* pay ₹149, the database updates 100% of the time. This is code work, not an infra cost.
+- **Cost**: **₹0**.
+
+### C. Free Monitoring
+- **Error Tracking**: Use **Sentry's Free Tier** (5,000 events/month). It will alert you if the AI generation breaks.
+- **Uptime**: Use **UptimeRobot** (Free) to ping your site every 5 minutes.
+- **Cost**: **₹0**.
+
+---
+
+## 3. Estimated Monthly Costs (Validation Phase)
+
+| Service | Current Usage | Cost (Approx INR) |
+| :--- | :--- | :--- |
+| **Supabase** | Free Tier | ₹0 |
+| **Vercel** | Free Tier | ₹0 |
+| **Gemini AI** | 1,000 prompts/mo | ~₹100 - ₹250 |
+| **PostHog** | Validation events | ₹0 |
+| **Razorpay** | Fees per sale | ~2% per transaction |
+| **Total** | | **~₹100 - ₹300 / month** |
+
+---
+
+## 4. "Don't Scale Yet" Guidelines
+**Do NOT upgrade to paid tiers until:**
+1.  **Database Limit**: Supabase warns you that you've reached 80% of your 500MB (This takes thousands of users).
+2.  **Traffic**: You are getting more than 50 concurrent visitors (Vercel Free tier handles standard traffic well).
+3.  **Revenue**: The app has earned enough to pay for its own upgrades (e.g., ₹2,000+ profit).
+
+---
+
+## 5. How to Track if it "Clicks"
+1.  **Conversion Rate**: In PostHog, track how many guests click the [Upgrade](file:///d:/Downloads/My-Projects/_active/PromptCraft/src/app/pricing/page.tsx#46-195) button versus how many actually land on `/pricing`.
+2.  **Churn**: If people sign up but never come back, the AI prompt quality might need tuning ([buildSystemPrompt.ts](file:///d:/Downloads/My-Projects/_active/PromptCraft/src/lib/buildSystemPrompt.ts)).
+3.  **Feedback**: Add a "Request Feature" button in the account page to see what users actually want before building it.

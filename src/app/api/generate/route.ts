@@ -8,7 +8,14 @@ import { createHash } from "crypto";
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+const model = genAI.getGenerativeModel({
+    model: "gemini-flash-latest",
+    generationConfig: {
+        maxOutputTokens: 2000,
+    }
+});
+
+const MAX_INPUT_CHARS = 2000;
 
 export async function POST(req: NextRequest) {
     try {
@@ -44,6 +51,16 @@ export async function POST(req: NextRequest) {
                     error: "INVALID_PROMPT",
                     message:
                         "Please provide a more descriptive idea (at least 5 characters).",
+                },
+                { status: 400 }
+            );
+        }
+
+        if (userIdea.length > MAX_INPUT_CHARS) {
+            return NextResponse.json(
+                {
+                    error: "PROMPT_TOO_LONG",
+                    message: `Idea is too long. Please keep it under ${MAX_INPUT_CHARS} characters.`,
                 },
                 { status: 400 }
             );

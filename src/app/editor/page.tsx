@@ -515,9 +515,10 @@ export default function EditorPage() {
                   className="min-h-[200px] bg-card/40 dark:bg-zinc-900/40 border-border dark:border-zinc-800 hover:border-border/80 dark:hover:border-zinc-700/50 focus:border-cyan-500/50 focus:ring-cyan-500/10 text-lg resize-none p-5 rounded-2xl transition-all placeholder:text-muted-foreground/40"
                   value={userIdea}
                   onChange={(e) => setUserIdea(e.target.value)}
+                  maxLength={2000}
                 />
                 <div className="absolute bottom-4 right-4 text-[10px] font-mono text-muted-foreground/40">
-                  {userIdea.length} CHARS
+                  {userIdea.length} / 2000 CHARS
                 </div>
               </div>
               <PromptHealth userIdea={userIdea} stack={stack} />
