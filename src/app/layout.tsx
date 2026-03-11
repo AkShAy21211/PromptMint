@@ -56,6 +56,8 @@ import { Toaster } from "@/components/ui/toaster";
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
+import { FacebookPixel } from "@/components/providers/FacebookPixel";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -75,6 +77,7 @@ export default function RootLayout({
 
           <BugReportButton />
           <Toaster />
+          <FacebookPixel />
 
           <PHProvider>
             <AuthProvider>{children}</AuthProvider>
