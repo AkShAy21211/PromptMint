@@ -23,7 +23,7 @@ import { PromptRecipes } from "@/components/PromptRecipes";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen, Layout, Server, Palette } from "lucide-react";
+import { Sparkles, RefreshCw, LogOut, User as UserIcon, Save, BookOpen, Layout, Server, Palette, Cpu, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { PromptHistory } from "@/components/PromptHistory";
@@ -34,6 +34,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import {
   FREE_STACKS,
   ALL_STACKS,
+  STACK_PRESETS,
 } from "@/lib/constants";
 import { detectConflicts } from "@/lib/detectConflicts";
 import Link from "next/link";
@@ -52,8 +53,13 @@ const GOAL_MODES: GoalMode[] = [
   "Performance optimization",    // Speed/memory improvements
   "Accessibility (a11y)",        // WCAG compliant
   "SEO optimized",               // Meta tags, SSR, structured data
-  "Micro-optimizations",         // Small perf tweaks
-  "Add authentication",          // Auth0/Supabase integration
+  "Framework migration",         // Migrate between stacks
+  "Agentic Flight Plan",         // Step-by-step roadmap
+];
+
+const PRO_GOAL_MODES: GoalMode[] = [
+  "Agentic Flight Plan",
+  "Refactor existing code",
 ];
 
 const TARGET_MODELS: TargetModel[] = [
@@ -67,48 +73,59 @@ const TARGET_MODELS: TargetModel[] = [
   "CodeLlama",        // Code-specific Llama
   "Cursor",           // Cursor AI IDE
   "Copilot",          // GitHub Copilot
+  "Windsurf",         // Codeium Windsurf IDE
+  "Trae",             // ByteDance Trae IDE
+  "PearAI",           // Open Source AI IDE
+  "Void",             // Open Source AI IDE
+  "v0.dev",           // Vercel v0
+  "Bolt.new",         // StackBlitz Bolt
+  "Lovable",          // Lovable GPT Engineer
+  "Replit Agent",     // Replit Agentic IDE
+  "Antigravity",      // Antigravity (Advanced Agentic Coding)
+];
+
+const PRO_MODELS: TargetModel[] = [
+  "Claude",
+  "GPT",
+  "v0.dev",
+  "Bolt.new",
+  "Lovable",
+  "Windsurf",
+  "Trae",
+  "Antigravity",
 ];
 
 const ENGINEERING_DEFAULTS = [
-  // Architecture
-  "Feature-based routing/folders",
-  "App Router (Next.js 14+)",
-  "Zod schema validation everywhere",
+  // Architecture & Structure
+  "Modular feature-based folders",
+  "App Router patterns (Next.js)",
+  "Zod schema validation (Shared)",
+  "Clean Architecture (Logic isolation)",
 
-  // TypeScript
+  // Type Safety
   "Strict TypeScript (No anys)",
   "Explicit return types",
-  "Infer types where possible",
+  "Immutable state patterns",
 
-  // Components & UI
-  "React Server Components (RSC) first",
-  "Shadcn/ui + Tailwind CSS",
-  "Framer Motion animations",
+  // UI & UX Standards
   "Mobile-first responsive design",
+  "ARIA / WCAG Accessibility (a11y)",
+  "Loading states & Suspense",
+  "Error boundaries & Fallbacks",
+  "Design system (Tokens/Vars)",
 
-  // Testing
-  "Vitest + React Testing Library",
-  "100% test coverage for logic",
-  "Error boundary tests",
+  // Logic & State
+  "Optimistic UI updates",
+  "Data caching & Revalidation",
 
-  // Performance
-  "Suspense + streaming",
-  "useTransition for UX",
-  "Image optimization (next/image)",
-
-  // Security
-  "Row Level Security (Supabase)",
-  "Input sanitization",
-  "CSP headers",
-
-  // DX
-  "ESLint + Prettier",
-  "Husky pre-commit hooks",
-  "TypeDoc comments",
-
-  // Deployment
-  "Vercel Edge runtime",
+  // Reliability
+  "Unit tests (Vitest/React Testing)",
   "Environment variable validation",
+  "Input sanitization & Security",
+
+  // DX & Style
+  "ESLint + Prettier standards",
+  "JSDoc / TypeDoc comments",
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -136,9 +153,12 @@ export default function EditorPage() {
   const [goalMode, setGoalMode] = useState<GoalMode>("Production-ready");
   const [targetModel, setTargetModel] = useState<TargetModel>("GPT");
   const [engineeringDefaults, setEngineeringDefaults] = useState<string[]>([]);
+  const [codeContext, setCodeContext] = useState("");
   const [isSavingRecipe, setIsSavingRecipe] = useState(false);
   const [activeStackTab, setActiveStackTab] = useState<"architecture" | "infrastructure" | "visuals">("architecture");
   const [recipeRefreshTrigger, setRecipeRefreshTrigger] = useState(0);
+  const [isInferringStack, setIsInferringStack] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
   const { user, profile, loading: authLoading, supabase } = useAuth();
@@ -166,6 +186,95 @@ export default function EditorPage() {
       setPromptCount(profile.usage_count);
     }
   }, [profile]);
+
+  const handleInferStack = async () => {
+    if (userIdea.trim().length < 10) {
+      toast({
+        title: "Idea too vague",
+        description: "Please write a bit more so AI can accurately guess your stack.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsInferringStack(true);
+    try {
+      const response = await fetch("/api/infer-stack", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIdea }),
+      });
+
+      if (!response.ok) throw new Error("Failed to infer stack");
+
+      const inferredStack = await response.json();
+      
+      // Filter for Pro restrictions if not Pro
+      const updatedStack = { ...stack };
+      let restrictedApplied = false;
+
+      Object.entries(inferredStack).forEach(([key, val]) => {
+        const stackKey = key as keyof Stack;
+        const freeOptions = FREE_STACKS[stackKey as keyof typeof FREE_STACKS] as string[] | undefined;
+        
+        if (!isPro && freeOptions && !freeOptions.includes(val as string)) {
+          // Fallback to "None" or first free option if restricted
+          // @ts-expect-error - Dynamic assignment to Stack keys
+          updatedStack[stackKey] = "None";
+          restrictedApplied = true;
+        } else {
+          // @ts-expect-error - Dynamic assignment to Stack keys
+          updatedStack[stackKey] = val as string;
+        }
+      });
+
+      setStack(updatedStack);
+      
+      toast({
+        title: "Stack Optimized",
+        description: restrictedApplied 
+          ? "Inference complete. (Some pro-only options were set to defaults)" 
+          : "Best-fit stack selected for your idea.",
+      });
+    } catch {
+      toast({
+        title: "Inference Failed",
+        description: "Could not detect stack. Please select manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsInferringStack(false);
+    }
+  };
+
+  const applyPreset = (presetName: string) => {
+    const preset = STACK_PRESETS[presetName];
+    if (!preset) return;
+
+    // Check for pro restrictions
+    if (!isPro) {
+      const restricted = Object.entries(preset).some(([key, val]) => {
+        const freeOptions = FREE_STACKS[key as keyof typeof FREE_STACKS] as string[] | undefined;
+        return freeOptions && !freeOptions.includes(val as string);
+      });
+
+      if (restricted) {
+        toast({
+          title: "Pro Preset",
+          description: "This preset contains Pro technologies. Upgrade to use it!",
+        });
+        router.push("/pricing");
+        return;
+      }
+    }
+
+    setStack(preset);
+    setShowPresets(false);
+    toast({
+      title: "Preset Applied",
+      description: `Loaded '${presetName}' template.`,
+    });
+  };
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
@@ -218,6 +327,7 @@ export default function EditorPage() {
         goal_mode: goalMode,
         target_model: targetModel,
         engineering_defaults: engineeringDefaults,
+        code_context: codeContext,
       };
 
       if (user) {
@@ -276,7 +386,7 @@ export default function EditorPage() {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIdea, stack, goalMode, targetModel, engineeringDefaults }),
+        body: JSON.stringify({ userIdea, stack, goalMode, targetModel, engineeringDefaults, codeContext }),
       });
 
       const data = await response.json();
@@ -346,10 +456,10 @@ export default function EditorPage() {
       toast({
         title: "Success",
         description: isPro
-          ? "Prompt minted! (unlimited)"
+          ? "Architecture orchestrated! (unlimited)"
           : user
-            ? `Prompt minted!(${newCount} / ${MAX_FREE} used)`
-            : `Prompt minted!(${newCount} / ${MAX_FREE} total)`,
+            ? `Architecture generated!(${newCount} / ${MAX_FREE} used)`
+            : `Architecture generated!(${newCount} / ${MAX_FREE} total)`,
       });
 
       if (window.innerWidth < 1024) {
@@ -517,11 +627,59 @@ export default function EditorPage() {
                   onChange={(e) => setUserIdea(e.target.value)}
                   maxLength={2000}
                 />
-                <div className="absolute bottom-4 right-4 text-[10px] font-mono text-muted-foreground/40">
-                  {userIdea.length} / 2000 CHARS
+                <div className="absolute bottom-4 right-4 flex items-center gap-3">
+                  <div className="text-[10px] font-mono text-muted-foreground/40">
+                    {userIdea.length} / 2000 CHARS
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleInferStack}
+                    disabled={isInferringStack || userIdea.length < 10}
+                    className={cn(
+                      "h-8 px-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-500 border border-cyan-500/20 transition-all",
+                      isInferringStack && "animate-pulse"
+                    )}
+                  >
+                    {isInferringStack ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Cpu className="w-3.5 h-3.5 mr-1.5" />
+                    )}
+                    <span className="text-[10px] font-bold uppercase tracking-wider">
+                      {isInferringStack ? "Thinking..." : "Smart Inference"}
+                    </span>
+                  </Button>
                 </div>
               </div>
               <PromptHealth userIdea={userIdea} stack={stack} />
+              <p className="text-[10px] text-muted-foreground/50 leading-relaxed px-1">
+                <Sparkles className="w-3 h-3 inline mr-1 text-cyan-500/50" />
+                <strong className="text-muted-foreground/70">Smart Inference</strong> detects tech from your idea. Say <em>&quot;choose the best stack for me&quot;</em> to auto-fill everything.
+              </p>
+              
+              {/* Code Context / Codebase Dropper */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
+                    Advanced Context (Optional)
+                  </span>
+                  {codeContext && (
+                    <button 
+                      onClick={() => setCodeContext("")}
+                      className="text-[9px] font-bold text-rose-500 hover:text-rose-400 uppercase tracking-widest transition-colors"
+                    >
+                      Clear Context
+                    </button>
+                  )}
+                </div>
+                <Textarea
+                  placeholder="Paste manifest files here (e.g., package.json, schema.prisma, requirements.txt) to give the AI context on your existing codebase..."
+                  className="min-h-[80px] bg-card/20 dark:bg-zinc-900/20 border-border dark:border-zinc-800 hover:border-border/80 dark:hover:border-zinc-700/30 focus:border-violet-500/50 focus:ring-violet-500/10 text-xs font-mono resize-none p-4 rounded-xl transition-all placeholder:text-muted-foreground/30"
+                  value={codeContext}
+                  onChange={(e) => setCodeContext(e.target.value)}
+                />
+              </div>
             </div>
 
             {/* Step 2: Stack */}
@@ -530,33 +688,81 @@ export default function EditorPage() {
                 <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em]">
                   Step 2: Refine Your Stack
                 </span>
-                <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800/50">
-                  {[
-                    { id: "architecture", label: "Arch", icon: Server },
-                    { id: "infrastructure", label: "Infra", icon: Layout },
-                    { id: "visuals", label: "Visual", icon: Palette },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveStackTab(tab.id as "architecture" | "infrastructure" | "visuals")}
-                      className={cn(
-                        "relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
-                        activeStackTab === tab.id
-                          ? "text-white"
-                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                      )}
+                <div className="flex items-center gap-2">
+                  {/* Presets Dropdown */}
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPresets(!showPresets)}
+                      className="h-8 rounded-xl border-dashed border-violet-500/30 text-violet-400 hover:text-violet-300 hover:bg-violet-500/5 text-[10px] font-bold uppercase tracking-wider"
                     >
-                      {activeStackTab === tab.id && (
-                        <motion.div
-                          layoutId="activeStackTab"
-                          className="absolute inset-0 bg-violet-600 rounded-lg shadow-sm"
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                        />
+                      Presets
+                      <ChevronDown className={cn("w-3 h-3 ml-1.5 transition-transform", showPresets && "rotate-180")} />
+                    </Button>
+
+                    <AnimatePresence>
+                      {showPresets && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={() => setShowPresets(false)} 
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute top-full left-0 mt-2 w-64 z-50 bg-card border border-border rounded-2xl shadow-2xl p-2 overflow-hidden"
+                          >
+                            <div className="px-3 py-2 text-[9px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 mb-1">
+                              Engineering Templates
+                            </div>
+                            {Object.keys(STACK_PRESETS).map((name) => (
+                              <button
+                                key={name}
+                                onClick={() => applyPreset(name)}
+                                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-muted transition-colors text-xs font-medium group"
+                              >
+                                {name}
+                                <div className="text-[9px] text-muted-foreground group-hover:text-violet-400 transition-colors">
+                                  {STACK_PRESETS[name].framework} + {STACK_PRESETS[name].styling}
+                                </div>
+                              </button>
+                            ))}
+                          </motion.div>
+                        </>
                       )}
-                      <tab.icon className="w-3 h-3 relative z-10" />
-                      <span className="relative z-10 hidden sm:inline">{tab.label}</span>
-                    </button>
-                  ))}
+                    </AnimatePresence>
+                  </div>
+
+                  <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800/50">
+                    {[
+                      { id: "architecture", label: "Arch", icon: Server },
+                      { id: "infrastructure", label: "Infra", icon: Layout },
+                      { id: "visuals", label: "Visual", icon: Palette },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveStackTab(tab.id as "architecture" | "infrastructure" | "visuals")}
+                        className={cn(
+                          "relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                          activeStackTab === tab.id
+                            ? "text-white"
+                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        )}
+                      >
+                        {activeStackTab === tab.id && (
+                          <motion.div
+                            layoutId="activeStackTab"
+                            className="absolute inset-0 bg-violet-600 rounded-lg shadow-sm"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                          />
+                        )}
+                        <tab.icon className="w-3 h-3 relative z-10" />
+                        <span className="relative z-10 hidden sm:inline">{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -746,59 +952,155 @@ export default function EditorPage() {
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-4 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 space-y-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em] flex items-center justify-between">
                     Goal Mode
+                    <span className="text-[9px] font-normal lowercase tracking-normal text-muted-foreground/50">Defines output complexity</span>
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {GOAL_MODES.map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => setGoalMode(mode)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors",
-                          goalMode === mode
-                            ? "bg-cyan-600/10 border-cyan-500/60 text-cyan-400"
-                            : "bg-background border-border text-muted-foreground hover:border-cyan-500/40 hover:text-cyan-300",
-                        )}
-                      >
-                        {mode}
-                      </button>
-                    ))}
+                    {GOAL_MODES.map((mode) => {
+                      const isProMode = PRO_GOAL_MODES.includes(mode);
+                      const isLocked = !isPro && isProMode;
+                      
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => {
+                            if (isLocked) {
+                              toast({
+                                title: "Pro Feature",
+                                description: `${mode} is an industrial-grade mode available on Pro plans.`,
+                              });
+                              router.push("/pricing");
+                              return;
+                            }
+                            setGoalMode(mode);
+                          }}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors flex items-center gap-1.5",
+                            goalMode === mode
+                              ? "bg-cyan-600/10 border-cyan-500/60 text-cyan-400"
+                              : "bg-background border-border text-muted-foreground hover:border-cyan-500/40 hover:text-cyan-300",
+                            isLocked && "opacity-70 grayscale-[0.5]"
+                          )}
+                        >
+                          {mode}
+                          {isProMode && (
+                            <span className={cn(
+                              "text-[8px] font-bold uppercase tracking-tighter px-1 rounded-sm",
+                              isLocked ? "bg-violet-500/10 text-violet-400" : "bg-cyan-500/10 text-cyan-500"
+                            )}>
+                              Pro
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 space-y-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">
-                    Target Model
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em] flex items-center justify-between">
+                    Target AI & IDEs
+                    <span className="text-[9px] font-normal lowercase tracking-normal text-muted-foreground/50">Optimizes prompt structure</span>
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {TARGET_MODELS.map((model) => (
-                      <button
-                        key={model}
-                        type="button"
-                        onClick={() => setTargetModel(model)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors",
-                          targetModel === model
-                            ? "bg-violet-600/10 border-violet-500/60 text-violet-400"
-                            : "bg-background border-border text-muted-foreground hover:border-violet-500/40 hover:text-violet-300",
-                        )}
-                      >
-                        {model}
-                      </button>
-                    ))}
+                    {TARGET_MODELS.map((model) => {
+                      const isProModel = PRO_MODELS.includes(model);
+                      const isLocked = !isPro && isProModel;
+                      
+                      return (
+                        <button
+                          key={model}
+                          type="button"
+                          onClick={() => {
+                            if (isLocked) {
+                              toast({
+                                title: "Pro Feature",
+                                description: `${model} optimization is available on Pro plans.`,
+                              });
+                              router.push("/pricing");
+                              return;
+                            }
+                            setTargetModel(model);
+                          }}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors flex items-center gap-1.5",
+                            targetModel === model
+                              ? "bg-violet-600/10 border-violet-500/60 text-violet-400"
+                              : "bg-background border-border text-muted-foreground hover:border-violet-500/40 hover:text-violet-300",
+                            isLocked && "opacity-70 grayscale-[0.5]"
+                          )}
+                        >
+                          {model}
+                          {isProModel && (
+                            <span className={cn(
+                              "text-[8px] font-bold uppercase tracking-tighter px-1 rounded-sm",
+                              isLocked ? "bg-violet-500/10 text-violet-400" : "bg-violet-500/10 text-violet-400"
+                            )}>
+                              Pro
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
               <div className="p-4 rounded-2xl bg-card/20 dark:bg-zinc-900/30 border border-border dark:border-zinc-800/50 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">
-                    Engineering Defaults
+                    Architecture Guardrails
                   </p>
                   {!isPro && (
                     <span className="text-[9px] font-bold text-violet-400 uppercase tracking-widest bg-violet-400/10 px-1.5 py-0.5 rounded">Pro Only</span>
                   )}
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex items-center gap-2 mb-4 bg-muted/20 p-2 rounded-xl border border-dashed border-border/50">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Blueprints:</span>
+                  <button
+                    onClick={() => {
+                      if (!isPro) { router.push("/pricing"); return; }
+                      setEngineeringDefaults([
+                        "Modular feature-based folders",
+                        "App Router patterns (Next.js)",
+                        "Zod schema validation (Shared)",
+                        "Strict TypeScript (No anys)",
+                        "Explicit return types"
+                      ]);
+                    }}
+                    className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+                  >
+                    Architect
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!isPro) { router.push("/pricing"); return; }
+                      setEngineeringDefaults([
+                        "Mobile-first responsive design",
+                        "Loading states & Suspense",
+                        "Optimistic UI updates",
+                        "Design system (Tokens/Vars)"
+                      ]);
+                    }}
+                    className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+                  >
+                    Sprinter
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!isPro) { router.push("/pricing"); return; }
+                      setEngineeringDefaults([
+                        "Strict TypeScript (No anys)",
+                        "ESLint + Prettier standards"
+                      ]);
+                    }}
+                    className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+                  >
+                    Minimalist
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
                   {ENGINEERING_DEFAULTS.map((def) => {
@@ -811,7 +1113,7 @@ export default function EditorPage() {
                           if (!isPro) {
                             toast({
                               title: "Pro Feature",
-                              description: "Opinionated Engineering Defaults are available on Pro plans.",
+                              description: "Expert Architecture Guardrails are available on Pro plans.",
                             });
                             router.push("/pricing");
                             return;

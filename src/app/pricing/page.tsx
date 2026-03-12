@@ -231,20 +231,20 @@ export default function PricingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <span className="px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-3 inline-block">
-              Premium Engineering · Production Ready
+            <span className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] mb-4 inline-block shadow-[0_0_20px_rgba(34,211,238,0.1)]">
+              Industrial Grade · Production Ready
             </span>
 
-            <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-[0.2em] mb-3">
-              Pricing in INR · Secure Payments via Razorpay
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] mb-4 opacity-70">
+              Pricing in INR · Secure Razorpay Gateway
             </p>
-            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-foreground mb-6">
+            <h1 className="text-5xl md:text-7xl font-black tracking-[-0.04em] leading-[0.95] text-foreground mb-8">
               Amplify Your <br />
-              <span className="bg-gradient-to-r from-cyan-600 via-violet-600 to-emerald-600 dark:from-cyan-400 dark:via-violet-400 dark:to-emerald-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
                 Creative Velocity
               </span>
             </h1>
-            <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed">
+            <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
               From curious guests to elite architects. Choose the tier that
               matches your engineering ambition.
             </p>
@@ -319,8 +319,8 @@ export default function PricingPage() {
                   With PromptMint
                 </div>
                 <p className="text-sm text-zinc-400 leading-relaxed">
-                  Type idea, get structured prompt, paste into AI, get highly
-                  structured, ready-to-test code significantly faster.{" "}
+                  Type idea, **Smart Inference** detects your stack, and you
+                  get a structured technical blueprint ready for any AI.{" "}
                   <strong className="text-zinc-300 block mt-2">
                     (Time: ~2 mins)
                   </strong>

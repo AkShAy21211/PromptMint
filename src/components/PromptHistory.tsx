@@ -11,6 +11,7 @@ export interface HistoryEntry {
     id?: string;
     idea: string;
     result: string;
+    title?: string;
     stack?: Record<string, string>;
     timestamp: number;
     tags?: string[];
@@ -179,12 +180,30 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger = 0 }: Pr
         ? history.filter((entry) => {
             const q = searchQuery.toLowerCase();
             return (
+                (entry.title && entry.title.toLowerCase().includes(q)) ||
                 entry.idea.toLowerCase().includes(q) ||
                 entry.result.toLowerCase().includes(q) ||
                 (entry.tags && entry.tags.some(t => t.toLowerCase().includes(q)))
             );
         })
         : history;
+
+    const handleRename = async (index: number, newTitle: string) => {
+        const entry = history[index];
+        const updatedHistory = [...history];
+        updatedHistory[index] = { ...entry, title: newTitle };
+        setHistory(updatedHistory);
+
+        if (user && isPro && !isOffline && entry.id) {
+            try {
+                await supabase.from("prompts").update({ title: newTitle }).eq("id", entry.id);
+            } catch (err) {
+                console.error("Rename failed:", err);
+            }
+        } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
+        }
+    };
 
     return (
         <div className="w-full space-y-4 pt-8 border-t border-border/50">
@@ -315,12 +334,19 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger = 0 }: Pr
                                     <div className="flex-1 min-w-0 pr-4">
                                         <div className="flex items-center gap-2 mb-1">
                                             <p className="text-sm text-foreground/90 truncate font-medium">
-                                                {entry.idea}
+                                                {entry.title || entry.idea}
                                             </p>
                                             {entry.tags && entry.tags.length > 0 && (
                                                 <div className="hidden sm:flex items-center gap-1 shrink-0">
                                                     {entry.tags.slice(0, 2).map(tag => (
-                                                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 truncate max-w-[60px]">
+                                                        <span 
+                                                            key={tag} 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSearchQuery(tag);
+                                                            }}
+                                                            className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 truncate max-w-[60px] hover:bg-amber-500/20 cursor-pointer transition-colors"
+                                                        >
                                                             {tag}
                                                         </span>
                                                     ))}
@@ -352,15 +378,48 @@ export function PromptHistory({ onRestore, user, isPro, refreshTrigger = 0 }: Pr
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="px-4 pb-4 border-t border-border/50 space-y-3 pt-3">
+                                            <div className="px-4 pb-4 border-t border-border/50 space-y-4 pt-4">
+                                                {/* Title/Rename Editor */}
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                                        Library Name (Rename for Library)
+                                                    </label>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            defaultValue={entry.title || entry.idea}
+                                                            onBlur={(e) => {
+                                                                if (e.target.value !== (entry.title || entry.idea)) {
+                                                                    handleRename(index, e.target.value);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === "Enter") {
+                                                                    handleRename(index, (e.target as HTMLInputElement).value);
+                                                                    (e.target as HTMLInputElement).blur();
+                                                                }
+                                                            }}
+                                                            className="flex-1 h-9 px-3 rounded-lg bg-card border border-border text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500/40"
+                                                            placeholder="Give this prompt a name..."
+                                                        />
+                                                    </div>
+                                                </div>
+
                                                 {/* Tags Editor */}
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <Tag className="w-3.5 h-3.5 text-muted-foreground" />
                                                     {entry.tags?.map((tag) => (
-                                                        <span key={tag} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                        <span 
+                                                            key={tag} 
+                                                            onClick={() => setSearchQuery(tag)}
+                                                            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20"
+                                                        >
                                                             {tag}
                                                             <button
-                                                                onClick={() => handleRemoveTag(index, tag)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRemoveTag(index, tag);
+                                                                }}
                                                                 className="hover:text-amber-400 transition-colors"
                                                             >
                                                                 <X className="w-3 h-3" />

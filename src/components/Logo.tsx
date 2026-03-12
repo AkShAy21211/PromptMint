@@ -16,8 +16,8 @@ export function Logo({ className, showSubtitle = true }: LogoProps) {
                     PromptMint
                 </h1>
                 {showSubtitle && (
-                    <p className="text-muted-foreground text-xs font-medium tracking-wide">
-                        AI Prompt Engineering Suite
+                    <p className="text-muted-foreground text-[10px] font-bold tracking-[0.1em] uppercase">
+                        Advanced Architecture & Orchestration
                     </p>
                 )}
             </div>

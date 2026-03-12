@@ -182,6 +182,41 @@ You must begin your generated prompt with exactly:
 You must begin your generated prompt with exactly:
 "You are GitHub Copilot, an expert AI pair programmer. Focus on succinct code completions, following established local patterns, and providing comments that help guide your next suggestion."`;
   }
+  if (targetModel === "Windsurf") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Windsurf AI, a powerful agentic software engineer. Focus on multi-file architectural changes, deep project context, and provide instructions that leverage your ability to read and write across the entire codebase."`;
+  }
+  if (targetModel === "Trae") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Trae AI, an intelligent coding agent. Focus on autonomous implementation, following project-wide conventions, and providing concise, surgical code edits that solve complex requirements."`;
+  }
+  if (targetModel === "v0.dev") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are v0, Vercel's expert UI architect. Focus on single-file, production-ready React components using Tailwind CSS and Lucide React. Ensure the code is self-contained and visually stunning."`;
+  }
+  if (targetModel === "Bolt.new") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Bolt.new, a full-stack web architect. Focus on generating complete, run-ready projects that can be executed instantly in a WebContainer environment. Prioritize Vite-based setups."`;
+  }
+  if (targetModel === "Lovable") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Lovable (GPT Engineer), a full-stack product designer. Focus on high-fidelity UI design, functional state machines, and building product prototypes that feel like final applications."`;
+  }
+  if (targetModel === "Replit Agent") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are the Replit Agent, a cloud-native software engineer. Focus on end-to-end development from frontend to backend deployment within the Replit ecosystem."`;
+  }
+  if (targetModel === "Antigravity") {
+    return `### Target AI Persona (STRICT):
+You must begin your generated prompt with exactly:
+"You are Antigravity, a powerful agentic AI coding assistant. Focus on high-velocity production engineering, deep architectural reasoning, and multi-step execution plans that maintain unbroken cognitive flow for the user."`;
+  }
   return "";
 }
 
@@ -232,16 +267,27 @@ CRITICAL: You must instruct the AI to prioritize WCAG compliance. The prompt sho
   } else if (goalMode === "SEO optimized") {
     goalLine = `The user has selected the goal mode **"SEO optimized"**.
 CRITICAL: You must instruct the AI to focus on search engine visibility. The prompt should cover semantic markup, meta tags, structured data (JSON-LD), sitemaps, and SSR/Prerendering strategies.`;
-  } else if (goalMode === "Micro-optimizations") {
-    goalLine = `The user has selected the goal mode **"Micro-optimizations"**.
-CRITICAL: You must instruct the AI to focus on small-scale performance improvements (e.g., thinning out heavy loops, memoizer patterns, optimizing string operations) where every cycle counts.`;
-  } else if (goalMode === "Add authentication") {
-    goalLine = `The user has selected the goal mode **"Add authentication"**.
-CRITICAL: You must instruct the AI to focus on secure identity management. The prompt should cover login/signup flows, JWT/Session handling, OAuth providers, and middleware-level route protection.`;
+  } else if (goalMode === "Agentic Flight Plan") {
+    goalLine = `The user has selected the goal mode **"Agentic Flight Plan"**.
+CRITICAL: You MUST break the implementation into a **Step-by-Step Multi-Phase Plan** dynamically tailored to the project goal:
+- Each phase MUST start with \`[[PHASE X: Project-Specific Name]]\` and end with \`[[PHASE_END]]\`.
+- Do NOT use a hardcoded list of phases. Instead, analyze the user's idea and define the phases logically (e.g., [[PHASE 1: MongoDB Schema]], [[PHASE 2: Auth Endpoints]], etc.).
+- You can use as many phases as needed to maintain clarity, but keep them focused.
+The UI will turn these markers into an interactive checklist. Ensure the content inside each phase is self-contained.`;
   }
 
   const modelHint = targetModel
     ? buildTargetModelHint(targetModel)
+    : "";
+
+  const codeContextBlock = options?.codeContext
+    ? `### EXISTING CODE CONTEXT (CRITICAL):
+The user has provided the following manifest or code snippet as context. You MUST respect the library versions, naming conventions, and project structure implied by this snippet:
+\`\`\`
+${options.codeContext}
+\`\`\`
+If there are version conflicts (e.g. they use Next 13 but the stack says Next.js), the **EXISTING CODE CONTEXT** takes precedence over general defaults.
+`
     : "";
 
   let defaultsBlock = "";
@@ -258,8 +304,8 @@ CRITICAL: You must instruct the AI to focus on secure identity management. The p
     });
 
     const defaultLines = filteredDefaults.map(d => `- ${d}`).join("\n");
-    defaultsBlock = `### Opinionated Engineering Defaults (MUST ENFORCE):
-You MUST add a section in your generated prompt named "**Engineering Defaults**" that strictly enforces these rules:
+    defaultsBlock = `### Architecture Guardrails (MUST ENFORCE):
+You MUST add a section in your generated prompt named "**Architecture Guardrails**" that strictly enforces these rules:
 ${defaultLines}`;
   }
 
@@ -285,6 +331,8 @@ ${modelHint}
 ### Goal / Depth Preference:
 ${goalLine}
 
+${codeContextBlock}
+
 ### Project Context:
 This is a **${contextLabel}** task. Structure your output accordingly.
 ${context === "backend" ? "Do NOT mention or enforce any styling frameworks, animation libraries, or UI component patterns — they are irrelevant to this context." : ""}
@@ -296,9 +344,15 @@ ${defaultsBlock}
 1. **Adaptive Length**:
    - For simple tasks (e.g., "a blue button"), provide a **concise, punchy, and direct** instruction set.
    - For complex tasks, use the full CO-STAR structure with all relevant sections.
-2. **Literal Stack Enforcement Section**: You MUST add a section to your generated prompt titled "### STACK ENFORCEMENT" that lists the selected technologies below as absolute, non-negotiable constraints.
-3. **Tech Stack Enforcement** — The following selection is **ABSOLUTE**. You must strictly use ONLY these technologies and **completely ignore** any conflicting technology choices mentioned in the "User's Idea" below:
+2. **Literal Stack Enforcement Section**: You MUST add a section to your generated prompt titled "### STACK ENFORCEMENT" that **copies the exact list below verbatim**. Do NOT rephrase, substitute, or "upgrade" any technology name.
+3. **Tech Stack Enforcement** — The following selection is **ABSOLUTE and FINAL**. You must strictly use ONLY these technologies. Do NOT substitute, rename, or swap any value (e.g., if it says "Railway" do NOT change it to "Render" or "Vercel"):
 ${stackEnforcement}
+
+4. **ZERO HALLUCINATION RULE (CRITICAL)**:
+   - You must **NEVER** add, suggest, recommend, or reference ANY library, framework, package, or technology that is NOT explicitly listed in the stack enforcement above.
+   - If a category (e.g., Styling, Animation, State Management) is absent from the list, it means the user intentionally excluded it. Do NOT invent a replacement.
+   - **Specific prohibitions**: Do NOT add validation libraries (Zod, Joi, Yup), HTTP clients (Axios, Got), testing frameworks, ORMs, or any other package UNLESS it appears in the stack list above.
+   - The ONLY technologies that should appear in your generated prompt are those in the STACK ENFORCEMENT section. Every other tool should be described generically (e.g., "input validation" instead of "Zod validation").
 
 ${conflicts.length > 0
       ? `### CRITICAL OVERRIDE: CONFLICTS DETECTED
@@ -314,9 +368,10 @@ You MUST add a final section to your generated prompt titled "**CRITICAL OVERRID
 
 ### Output Formatting Requirements:
 1. **Structural Clarity**: Use exactly two newlines between sections.
-2. **Section Headers**: Each section MUST start with its title in bold, e.g., "**Context**".
-3. **Readability**: Within each section, use **bullet points** (using "- ") for lists of requirements, steps, or constraints. Avoid dense paragraphs.
-4. **Emphasis**: Use **bolding** for critical technical terms, file names, or variable names.
+2. **Step-by-Step Reasoning**: Before the CO-STAR sections, add a hidden section (or a section named "### LOGICAL ARCHITECTURE") where you briefly explain the engineering reasons for choosing certain patterns (e.g., why a certain hook or middleware is used).
+3. **Section Headers**: Each section MUST start with its title in bold, e.g., "**Context**".
+4. **Readability**: Within each section, use **bullet points** (using "- ") for lists of requirements, steps, or constraints. Avoid dense paragraphs.
+5. **Emphasis**: Use **bolding** for critical technical terms, file names, or variable names.
 
 ### User's Idea (Functional Requirements Only):
 "${userIdea}"

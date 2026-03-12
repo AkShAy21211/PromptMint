@@ -27,7 +27,7 @@ export function PromptHealth({ userIdea, stack }: PromptHealthProps) {
     } else if (userIdea.trim().length < 15) {
         hints.push({
             type: "error",
-            text: "Idea is very short. The AI will have to hallucinate features and data models.",
+            text: "Idea is very short. The AI will have to speculate on missing features and logic.",
         });
     } else if (userIdea.trim().length > 100) {
         hints.push({

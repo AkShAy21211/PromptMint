@@ -8,6 +8,7 @@ import {
     DeploymentType,
     AuthType,
     StateManagementType,
+    Stack,
 } from "./types";
 
 export const FREE_STACKS = {
@@ -15,7 +16,7 @@ export const FREE_STACKS = {
     database: ["None", "MongoDB", "PostgreSQL"] as DatabaseType[],
     apiPattern: ["None", "REST", "Server Actions"] as ApiPatternType[],
     language: ["TypeScript", "JavaScript"] as LanguageType[],
-    styling: ["Tailwind CSS", "shadcn/ui"] as StylingType[],
+    styling: ["None", "Tailwind CSS", "shadcn/ui"] as StylingType[],
     animation: ["Framer Motion", "None"] as AnimationType[],
     deployment: ["None", "Vercel", "Netlify"] as DeploymentType[],
     auth: ["None", "Clerk", "Supabase Auth"] as AuthType[],
@@ -125,6 +126,7 @@ export const ALL_STACKS: Record<string, StackOption[]> = {
         { name: "Nim", category: "Modern" },
     ],
     styling: [
+        { name: "None", category: "General", isPopular: true },
         { name: "Tailwind CSS", category: "Utility", isPopular: true },
         { name: "shadcn/ui", category: "Components", isPopular: true },
         { name: "Chakra UI", category: "React-Only" },
@@ -228,5 +230,64 @@ export const ALL_STACKS: Record<string, StackOption[]> = {
         { name: "XState", category: "Machines" },                   // Complex flows
         { name: "Rematch", category: "Redux-like" },
     ],
-
 };
+
+export const STACK_PRESETS: Record<string, Stack> = {
+    "Next.js App Router (T3-like)": {
+        framework: "Next.js",
+        language: "TypeScript",
+        styling: "Tailwind CSS",
+        database: "PostgreSQL",
+        apiPattern: "Server Actions",
+        auth: "Auth.js (NextAuth)",
+        stateManagement: "TanStack Query",
+        animation: "Framer Motion",
+        deployment: "Vercel",
+    },
+    "MERN Stack (Legacy/Standard)": {
+        framework: "Express",
+        language: "JavaScript",
+        styling: "None",
+        database: "MongoDB",
+        apiPattern: "REST",
+        auth: "Custom JWT",
+        stateManagement: "Redux Toolkit",
+        animation: "None",
+        deployment: "Docker",
+    },
+    "Modern SaaS (Supabase)": {
+        framework: "Next.js",
+        language: "TypeScript",
+        styling: "shadcn/ui",
+        database: "Supabase",
+        apiPattern: "Server Actions",
+        auth: "Supabase Auth",
+        stateManagement: "Zustand",
+        animation: "Framer Motion",
+        deployment: "Vercel",
+    },
+    "Python AI Backend": {
+        framework: "FastAPI",
+        language: "Python",
+        styling: "None",
+        database: "Pinecone",
+        apiPattern: "REST",
+        auth: "None",
+        stateManagement: "None",
+        animation: "None",
+        deployment: "Railway",
+    },
+    "Mobile App (Cross-Platform)": {
+        framework: "React Native",
+        language: "TypeScript",
+        styling: "NativeWind",
+        database: "SQLite",
+        apiPattern: "REST",
+        auth: "Clerk",
+        stateManagement: "Zustand",
+        animation: "Reanimated",
+        deployment: "None",
+    }
+};
+
+export type StackPresetName = keyof typeof STACK_PRESETS;

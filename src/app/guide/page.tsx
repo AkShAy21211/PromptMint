@@ -130,16 +130,16 @@ export default function GuidePage() {
                     >
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-500 uppercase tracking-widest">
                             <BookOpen className="w-3 h-3" />
-                            The Playbook
+                            AI Strategy Manual
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
-                            The Art & Science of <br />
+                            The Standards for <br />
                             <span className="bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent">
-                                High-Velocity Prompting
+                                Engineering Orchestration
                             </span>
                         </h1>
                         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed">
-                            Stop arguing with AI. Learn the frameworks that turn simple ideas into production-ready code blocks in seconds.
+                            Stop fighting prompt drift. Master the frameworks that turn technical intent into production-grade architectures.
                         </p>
                     </motion.div>
                 </header>
@@ -179,6 +179,84 @@ export default function GuidePage() {
                                     </p>
                                 </motion.div>
                             ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Step 3: Target AI & IDEs */}
+                <section className="mb-32">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div className="p-8 rounded-[2rem] bg-card border border-border space-y-6">
+                            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500">
+                                <Target className="w-6 h-6" />
+                            </div>
+                            <h2 className="text-3xl font-black">Choosing Your Goal Mode</h2>
+                            <p className="text-muted-foreground leading-relaxed">
+                                Goal Modes define the <strong>depth and complexity</strong> of the generated prompt. Choosing the right mode ensures the AI focuses on what matters most for your current task.
+                            </p>
+                            <ul className="space-y-4">
+                                <li className="flex gap-4">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center text-[10px] font-bold text-cyan-500 mt-1">1</div>
+                                    <div>
+                                        <h4 className="font-bold text-sm">Scaffold</h4>
+                                        <p className="text-xs text-muted-foreground">Generates a high-level project structure and boilerplate. Best for starting from scratch or exploring folder architectures.</p>
+                                    </div>
+                                </li>
+                                <li className="flex gap-4">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-emerald-500 mt-1">2</div>
+                                    <div>
+                                        <h4 className="font-bold text-sm">Production-ready</h4>
+                                        <p className="text-xs text-muted-foreground">Forces the AI to include error handling, logging, Zod validation, and unit test placeholders. Use this for scalable, real-world apps.</p>
+                                    </div>
+                                </li>
+                                <li className="flex gap-4">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center text-[10px] font-bold text-violet-500 mt-1">3</div>
+                                    <div>
+                                        <h4 className="font-bold text-sm">Agentic Flight Plan</h4>
+                                        <p className="text-xs text-muted-foreground">Creates a multi-phase implementation roadmap. It breaks down complex tasks into manageable chunks that you can execute sequentially.</p>
+                                    </div>
+                                </li>
+                                <li className="flex gap-4">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-[10px] font-bold text-orange-500 mt-1">4</div>
+                                    <div>
+                                        <h4 className="font-bold text-sm">Refactor existing code</h4>
+                                        <p className="text-xs text-muted-foreground">Instructs the AI to analyze and optimize your logic, focusing on clean code principles and performance without changing behavior.</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="p-8 rounded-[2rem] bg-zinc-900 border border-zinc-800 text-white space-y-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full" />
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                                <Cpu className="w-6 h-6" />
+                            </div>
+                            <h2 className="text-3xl font-black">Target AI & IDEs</h2>
+                            <p className="text-zinc-400 leading-relaxed">
+                                Every major LLM has a unique &quot;personality&quot; and prompt sensitivity. Choosing the correct model flavor changes how PromptMint structures the final instructions.
+                            </p>
+                            <div className="space-y-6 pt-4">
+                                <div className="space-y-4">
+                                    <h4 className="font-bold text-cyan-400 text-sm">AI IDEs & Agents (Cursor, Windsurf, Trae)</h4>
+                                    <p className="text-xs text-zinc-500">Optimized for <strong>multi-file editing</strong> and agentic behavior. We prioritize whole-file context and surgical edits over simple chat snippets.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-amber-400 text-sm">Web Builders (v0, Bolt.new, Lovable)</h4>
+                                    <p className="text-xs text-zinc-500">These tools love <strong>single-file masterpieces</strong> or Vite-based scaffolds. We optimize for code that runs instantly in the browser without manual stitching.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-indigo-400 text-sm">Claude 3.5 Sonnet (Nuance King)</h4>
+                                    <p className="text-xs text-zinc-500">Excels at long-form reasoning. We use <strong>XML tagging</strong> and strict &quot;Context-before-Task&quot; ordering.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-emerald-400 text-sm">GPT-4o (Reasoning Powerhouse)</h4>
+                                    <p className="text-xs text-zinc-500">Best for following strict negative rules. We structure the prompt with clear <strong>Objective vs. Constraints</strong> blocks.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-pink-400 text-sm">Antigravity (Agentic Mastery)</h4>
+                                    <p className="text-xs text-zinc-500">Optimized for <strong>complex, high-velocity engineering</strong>. We focus on deep architectural reasoning and broken-flow prevention.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -225,11 +303,11 @@ export default function GuidePage() {
                     </div>
                 </section>
 
-                {/* Engineering Defaults */}
+                {/* Architecture Guardrails */}
                 <section className="mb-32 text-center max-w-4xl mx-auto">
                     <h2 className="text-4xl font-black mb-6">Built for Professionals.</h2>
                     <p className="text-xl text-muted-foreground mb-16 leading-relaxed">
-                        Standard AI prompts often produce &quot;lazy&quot; code. PromptMint lets you force strict engineering rules directly into the foundation.
+                        Standard AI prompts often produce &quot;lazy&quot; code. PromptMint lets you force strict <strong>Architecture Guardrails</strong> directly into the foundation.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -237,33 +315,135 @@ export default function GuidePage() {
                             <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-500 mx-auto">
                                 <Code2 className="w-6 h-6" />
                             </div>
-                            <h3 className="font-bold">Strict TS</h3>
-                            <p className="text-sm text-muted-foreground">Force no any, proper interfaces, and exhausted switch checks for enterprise durability.</p>
+                            <h3 className="font-bold">Strict Type Safety</h3>
+                            <p className="text-sm text-muted-foreground">Force no &apos;any&apos;, proper interfaces, and exhaustive checks for enterprise-grade durability.</p>
                         </div>
                         <div className="space-y-4">
                             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 mx-auto">
                                 <ShieldCheck className="w-6 h-6" />
                             </div>
-                            <h3 className="font-bold">Error Security</h3>
-                            <p className="text-sm text-muted-foreground">Enforce robust try-catch-finally patterns and input sanitization to block vulnerabilities.</p>
+                            <h3 className="font-bold">Quality Blueprints</h3>
+                            <p className="text-sm text-muted-foreground">Apply production-grade standards with 1-click presets: Architect, Sprinter, or Minimalist.</p>
                         </div>
                         <div className="space-y-4">
                             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 mx-auto">
                                 <CheckCircle2 className="w-6 h-6" />
                             </div>
-                            <h3 className="font-bold">Accessibility</h3>
-                            <p className="text-sm text-muted-foreground">Guarantee ARIA compliance and semantic HTML—building tech that everyone can use.</p>
+                            <h3 className="font-bold">Security & a11y</h3>
+                            <p className="text-sm text-muted-foreground">Guarantee ARIA compliance, semantic HTML, and secure patterns—building tech that everyone can trust.</p>
                         </div>
                     </div>
 
-                    <div className="mt-24 p-8 rounded-2xl bg-muted/20 border border-border text-left">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-amber-500" />
-                            Pro Tip: The &quot;Production Bias&quot;
-                        </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Most AI models gravitate toward generic, tutorial-level code. PromptMint solves this by injecting <strong>Engineering Defaults</strong> that favor design patterns over simple loops. By enabling <i>Functional Preference</i> or <i>Zod Validation</i>, you bypass the tutorial phase and jump straight to the code you&apos;d want in a real pull request.
-                        </p>
+                    <div className="mt-24 p-8 rounded-2xl bg-muted/20 border border-border text-left relative group overflow-hidden">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-violet-600/20 to-cyan-600/20 blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
+                        <div className="relative">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-amber-500" />
+                                Pro Engineering: The &quot;Quality Multiplier&quot;
+                            </h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                                Most AI models gravitate toward generic, tutorial-level code. PromptMint solves this by injecting <strong>Architecture Guardrails</strong> that favor design patterns over simple loops.
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="p-4 rounded-xl bg-background/50 border border-border/50">
+                                    <h4 className="font-bold text-xs mb-2">Zod Schema Validation</h4>
+                                    <p className="text-[11px] text-muted-foreground">Toggles &quot;Shared Type Safety&quot; - ensures the AI generates Zod validation schemas for data objects, preventing runtime crashes.</p>
+                                </div>
+                                <div className="p-4 rounded-xl bg-background/50 border border-border/50">
+                                    <h4 className="font-bold text-xs mb-2">Modular Feature Folders</h4>
+                                    <p className="text-[11px] text-muted-foreground">The AI will avoid messy flat folder structures, focusing on a scalable modular architecture organized by domain area.</p>
+                                </div>
+                                <div className="p-4 rounded-xl bg-background/50 border border-border/50">
+                                    <h4 className="font-bold text-xs mb-2">App Router Patterns</h4>
+                                    <p className="text-[11px] text-muted-foreground">Forces modern Next.js/React patterns like Server Components (RSC) and Suspense boundaries for maximum performance.</p>
+                                </div>
+                                <div className="p-4 rounded-xl bg-background/50 border border-border/50">
+                                    <h4 className="font-bold text-xs mb-2">Vitest + React Testing</h4>
+                                    <p className="text-[11px] text-muted-foreground">The AI will architect logic to be 100% testable, including props-based isolation and mocked API interactions.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* How Magic Choice Works */}
+                <section className="mb-32">
+                    <div className="flex flex-col md:flex-row gap-16">
+                        <div className="md:w-1/3 space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-bold text-cyan-500 uppercase tracking-widest">
+                                <Zap className="w-3 h-3" />
+                                Smart Inference
+                            </div>
+                            <h2 className="text-3xl font-bold tracking-tight">How Smart <br />Stack Inference Works</h2>
+                            <p className="text-muted-foreground">
+                                The Smart Inference engine analyzes your technical intent to detect your stack — operating in two distinct modes.
+                            </p>
+                        </div>
+                        <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.1 }}
+                                className="p-6 rounded-2xl bg-card border border-border hover:border-cyan-500/30 transition-all hover:shadow-xl hover:shadow-cyan-500/5 group"
+                            >
+                                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Target className="w-5 h-5" />
+                                </div>
+                                <h3 className="font-bold mb-2">Extraction Mode</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                                    <strong>Default behavior.</strong> Only selects technologies you explicitly name. Everything else stays &quot;None&quot; — giving you full manual control.
+                                </p>
+                                <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Example</p>
+                                    <p className="text-xs font-mono text-cyan-500">&quot;auth system using MongoDB and Node.js&quot;</p>
+                                    <p className="text-[10px] text-muted-foreground mt-1">→ Express, MongoDB, JavaScript. Everything else: None.</p>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="p-6 rounded-2xl bg-card border border-border hover:border-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/5 group"
+                            >
+                                <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Sparkles className="w-5 h-5" />
+                                </div>
+                                <h3 className="font-bold mb-2">Full Inference Mode</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                                    Triggered when you ask the AI to decide. It fills <strong>all</strong> categories with the best modern choices for your idea.
+                                </p>
+                                <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Example</p>
+                                    <p className="text-xs font-mono text-violet-500">&quot;Build a SaaS app, choose the best stack for me&quot;</p>
+                                    <p className="text-[10px] text-muted-foreground mt-1">→ Next.js, PostgreSQL, Tailwind, Clerk, Vercel, Zustand…</p>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 p-6 rounded-2xl bg-cyan-500/5 border border-cyan-500/10">
+                        <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-cyan-500" />
+                            Trigger Phrases for Full Inference
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                "choose for me",
+                                "pick the best",
+                                "recommend a stack",
+                                "suggest technologies",
+                                "you decide",
+                                "auto-select everything",
+                            ].map((phrase) => (
+                                <span
+                                    key={phrase}
+                                    className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-mono text-cyan-600 dark:text-cyan-400"
+                                >
+                                    &quot;{phrase}&quot;
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 </section>
 

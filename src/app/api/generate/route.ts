@@ -28,19 +28,20 @@ export async function POST(req: NextRequest) {
         const forwarded = req.headers.get("x-forwarded-for");
         const ip = forwarded ? forwarded.split(/, /)[0] : "127.0.0.1";
         const ip_hash = createHash("sha256").update(ip).digest("hex");
-
         const {
             userIdea,
             stack,
             goalMode,
             targetModel,
             engineeringDefaults,
+            codeContext,
         }: {
             userIdea: string;
             stack: Stack;
             goalMode?: GoalMode;
             targetModel?: TargetModel;
             engineeringDefaults?: string[];
+            codeContext?: string;
         } = await req.json();
 
         // ── Input Validation ────────────────────────────────────────────────────
@@ -84,19 +85,19 @@ export async function POST(req: NextRequest) {
         const VALID_AUTH = ALL_STACKS.auth.map(o => o.name);
         const VALID_STATE = ALL_STACKS.stateManagement.map(o => o.name);
 
-        if (stack.framework && !VALID_FRAMEWORKS.includes(stack.framework)) {
+        if (stack.framework && stack.framework !== "None" && !VALID_FRAMEWORKS.includes(stack.framework)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid framework selection." },
                 { status: 400 }
             );
         }
-        if (stack.database && !VALID_DATABASES.includes(stack.database)) {
+        if (stack.database && stack.database !== "None" && !VALID_DATABASES.includes(stack.database)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid database selection." },
                 { status: 400 }
             );
         }
-        if (stack.apiPattern && !VALID_API_PATTERNS.includes(stack.apiPattern)) {
+        if (stack.apiPattern && stack.apiPattern !== "None" && !VALID_API_PATTERNS.includes(stack.apiPattern)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid API pattern selection." },
                 { status: 400 }
@@ -108,31 +109,31 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
-        if (stack.styling && !VALID_STYLING.includes(stack.styling)) {
+        if (stack.styling && stack.styling !== "None" && !VALID_STYLING.includes(stack.styling)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid styling selection." },
                 { status: 400 }
             );
         }
-        if (stack.animation && !VALID_ANIMATION.includes(stack.animation)) {
+        if (stack.animation && stack.animation !== "None" && !VALID_ANIMATION.includes(stack.animation)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid animation selection." },
                 { status: 400 }
             );
         }
-        if (stack.deployment && !VALID_DEPLOYMENT.includes(stack.deployment)) {
+        if (stack.deployment && stack.deployment !== "None" && !VALID_DEPLOYMENT.includes(stack.deployment)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid deployment selection." },
                 { status: 400 }
             );
         }
-        if (stack.auth && !VALID_AUTH.includes(stack.auth)) {
+        if (stack.auth && stack.auth !== "None" && !VALID_AUTH.includes(stack.auth)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid auth selection." },
                 { status: 400 }
             );
         }
-        if (stack.stateManagement && !VALID_STATE.includes(stack.stateManagement)) {
+        if (stack.stateManagement && stack.stateManagement !== "None" && !VALID_STATE.includes(stack.stateManagement)) {
             return NextResponse.json(
                 { error: "INVALID_STACK", message: "Invalid state management selection." },
                 { status: 400 }
@@ -211,6 +212,7 @@ export async function POST(req: NextRequest) {
             goalMode,
             targetModel,
             engineeringDefaults,
+            codeContext,
         });
 
         const result = await model.generateContent(systemPrompt);

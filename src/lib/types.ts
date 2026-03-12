@@ -199,9 +199,8 @@ export type GoalMode =
   | "Performance optimization"
   | "Accessibility (a11y)"
   | "SEO optimized"
-  | "Micro-optimizations"
   | "Framework migration"
-  | "Add authentication";
+  | "Agentic Flight Plan";
 
 export type TargetModel =
   | "Claude"
@@ -213,7 +212,16 @@ export type TargetModel =
   | "DeepSeek"
   | "CodeLlama"
   | "Cursor"
-  | "Copilot";
+  | "Copilot"
+  | "Windsurf"
+  | "Trae"
+  | "PearAI"
+  | "Void"
+  | "v0.dev"
+  | "Bolt.new"
+  | "Lovable"
+  | "Replit Agent"
+  | "Antigravity";
 
 
 // ─── Opinionated Defaults (optional) ────────────────────────────────────────
@@ -242,6 +250,7 @@ export interface GenerationOptions {
   goalMode?: GoalMode;
   targetModel?: TargetModel;
   engineeringDefaults?: string[];
+  codeContext?: string;
 }
 
 export interface HistoryEntry {
