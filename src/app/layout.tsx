@@ -42,7 +42,7 @@ export const metadata: Metadata = {
       "Turn your messy UI idea into a structured CO-STAR prompt for Cursor, Claude, or Copilot.",
   },
   verification: {
-    google: "2KLPUj9mkh0-uLbS4NzcLq6f8R4zK_NXMa6yMxw5REA",
+    google: "VWZyuN6Wh53RGX7qp_k07Y1A3WD6tIGMygmL94g4AfE",
     other: {
       "facebook-domain-verification": "tksvb2wsf5xrquoww8flb7qy4q83rk",
     },
