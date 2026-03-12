@@ -165,6 +165,15 @@ export default function PricingPage() {
         theme: {
           color: "#8b5cf6",
         },
+        // Force UPI to be the first/preferred option for subscriptions
+        config: {
+          display: {
+            preferences: {
+              show_default_blocks: true,
+            },
+            sequence: ["block.upi"],
+          },
+        },
       };
 
       if (!window.Razorpay) throw new Error("Razorpay not loaded");
@@ -250,6 +259,12 @@ export default function PricingPage() {
             </p>
           </motion.div>
         </header>
+
+        <div className="text-center mb-12">
+          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest opacity-60">
+            Note: For GPay/PhonePe subscriptions, if QR fails, please use &quot;Pay by UPI ID&quot;
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch mb-24">
           {pricingTiers.map(
