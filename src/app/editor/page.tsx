@@ -190,7 +190,7 @@ export default function EditorPage() {
   const handleInferStack = async () => {
     if (userIdea.trim().length < 10) {
       toast({
-        title: "Idea too vague",
+        title: "Idea needs more detail",
         description: "Please write a bit more so AI can accurately guess your stack.",
         variant: "destructive",
       });

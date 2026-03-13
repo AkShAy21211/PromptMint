@@ -56,7 +56,7 @@ export function BugReportButton() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="w-72 rounded-2xl border border-white/10 bg-[#0f0f0f]/95 backdrop-blur-xl shadow-2xl shadow-black/40 overflow-hidden"
+              className="w-72 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0f0f0f]/95 backdrop-blur-xl shadow-2xl shadow-zinc-200 dark:shadow-black/40 overflow-hidden"
             >
               {/* Header stripe */}
               <div className="h-1 w-full bg-gradient-to-r from-amber-500 to-orange-500" />
@@ -66,19 +66,19 @@ export function BugReportButton() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center">
-                      <Bug className="w-3.5 h-3.5 text-amber-400" />
+                      <Bug className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                     </div>
-                    <p className="text-sm font-bold text-white leading-none">
+                    <p className="text-sm font-bold text-zinc-900 dark:text-white leading-none">
                       Found a bug?
                     </p>
-                    <p className="text-[10px] text-zinc-500 font-medium mt-0.5 uppercase tracking-widest">
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium mt-0.5 uppercase tracking-widest">
                       Help us improve
                     </p>
 
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="w-6 h-6 flex items-center justify-center rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+                    className="w-6 h-6 flex items-center justify-center rounded-lg text-zinc-400 dark:text-white/30 hover:text-zinc-600 dark:hover:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
                     aria-label="Close"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -88,7 +88,7 @@ export function BugReportButton() {
 
 
                 {/* Description */}
-                <p className="text-xs text-white/40 leading-relaxed mb-4">
+                <p className="text-xs text-zinc-500 dark:text-white/40 leading-relaxed mb-4">
                   Screenshot the bug, describe what happened, and submit the
                   form. Takes 60 seconds.
                 </p>
@@ -121,25 +121,21 @@ export function BugReportButton() {
           onClick={() => setIsOpen((v) => !v)}
           aria-label="Report a bug"
           className={`
-            group relative flex items-center gap-2 h-10 rounded-full border
+            group relative flex items-center gap-2 h-9 sm:h-10 rounded-full border
             transition-all duration-300 shadow-lg
             ${isOpen
-              ? "px-4 bg-white/10 border-white/20 text-white"
-              : "px-4 bg-[#0f0f0f]/90 border-white/10 text-white/60 hover:text-white hover:border-amber-500/40 hover:bg-[#0f0f0f]"
+              ? "px-3 sm:px-4 bg-zinc-100 dark:bg-white/10 border-zinc-200 dark:border-white/20 text-black dark:text-white"
+              : "px-3 sm:px-4 bg-white dark:bg-[#0f0f0f]/90 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white hover:border-amber-500/40 hover:bg-zinc-50 dark:hover:bg-[#0f0f0f]"
             }
           `}
         >
-
-
           <Bug
-            className={`w-3.5 h-3.5 transition-colors duration-200 ${isOpen ? "text-amber-400" : "text-white/50 group-hover:text-amber-400"
+            className={`w-3 sm:w-3.5 h-3 sm:h-3.5 transition-colors duration-200 ${isOpen ? "text-amber-600 dark:text-amber-400" : "text-zinc-400 dark:text-white/50 group-hover:text-amber-600 dark:group-hover:text-amber-400"
               }`}
           />
-          <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap">
+          <span className="text-[10px] sm:text-[11px] font-semibold tracking-wide whitespace-nowrap">
             {isOpen ? "Close" : "Report Bug"}
           </span>
-
-
         </motion.button>
       </div>
     </>

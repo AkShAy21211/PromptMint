@@ -136,7 +136,7 @@ export default function LandingPage() {
   const current = EXAMPLES[activeExample];
 
   return (
-    <main className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30">
+    <main className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30 overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
 
         {/* Top Navigation */}
@@ -188,9 +188,9 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl md:text-6xl lg:text-7xl font-[900] tracking-[-0.04em] leading-[0.95] mb-4"
+              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-[900] tracking-[-0.04em] leading-[0.95] mb-4"
             >
-              Stop fighting AI hallucinations.
+              Eliminate AI hallucinations.
               <br />
               <span className="bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
                 Start architecting.
@@ -210,12 +210,12 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-wrap items-center gap-3"
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-3"
             >
               {["UI Components", "REST APIs", "Full-Stack Apps"].map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/50 px-3 py-1.5 rounded-full"
+                  className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/50 px-3 py-1.5 rounded-full"
                 >
                   {tag}
                 </span>
@@ -226,7 +226,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex items-center gap-4 pt-2"
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2"
             >
               <Button
                 size="lg"
@@ -255,7 +255,7 @@ export default function LandingPage() {
             className="flex-[1.2] w-full bg-zinc-950/90 backdrop-blur-xl border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
           >
             {/* Tab selector */}
-            <div className="flex border-b border-white/5 bg-white/[0.02] px-4 pt-3 gap-2">
+            <div className="flex border-b border-white/5 bg-white/[0.02] px-4 pt-3 gap-2 overflow-x-auto no-scrollbar">
               {EXAMPLES.map((ex, i) => (
                 <button
                   key={ex.id}
@@ -328,11 +328,11 @@ export default function LandingPage() {
                     transition={{ delay: 0.5 }}
                     className="absolute -right-4 top-1/2 -translate-y-1/2 translate-x-1/2 z-20 bg-rose-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow-xl border border-rose-400/50 hidden md:block whitespace-nowrap"
                   >
-                    Too vague for AI!
+                    Focus on the details!
                   </motion.div>
                 </div>
                 <div className="mt-auto bg-zinc-900/50 border border-zinc-800 rounded-lg p-3 text-xs text-zinc-500 italic">
-                  AI guesses. You argue. 20 min wasted.
+                  AI guesswork leads to manual rework. Optimize your workflow.
                 </div>
               </div>
 
@@ -424,16 +424,16 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-32 p-12 rounded-[3.5rem] bg-zinc-950 border border-cyan-500/10 shadow-[0_0_50px_-12px_rgba(34,211,238,0.1)] relative overflow-hidden group"
+          className="mb-32 p-6 sm:p-12 rounded-3xl md:rounded-[3.5rem] bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-cyan-500/10 shadow-lg dark:shadow-[0_0_50px_-12px_rgba(34,211,238,0.1)] relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/5 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-violet-600/10 transition-colors" />
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/10 dark:bg-violet-600/5 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-violet-600/15 dark:group-hover:bg-violet-600/10 transition-colors" />
           <div className="relative z-10 max-w-3xl">
-            <h2 className="text-3xl md:text-5xl font-black mb-8 tracking-tighter">Built for engineers, not tourists.</h2>
-            <div className="space-y-6 text-lg md:text-xl text-zinc-400 leading-relaxed font-medium">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black mb-8 tracking-tighter text-zinc-900 dark:text-white">Built for professional engineers.</h2>
+            <div className="space-y-6 text-lg md:text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
               <p>
                 Generic prompts lead to generic bugs. When you ask a standard LLM to &quot;build a login page,&quot; you spend more time fixing what it ignored than writing new features.
               </p>
-              <p className="text-white/90">
+              <p className="text-zinc-900 dark:text-white/90">
                 PromptMint bridges the gap between your intent and the AI&apos;s execution. We enforce your stack, inject architecture guardrails, and structure the output into a multi-phase **Agentic Flight Plan**.
               </p>
             </div>

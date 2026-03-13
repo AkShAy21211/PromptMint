@@ -321,7 +321,7 @@ export default function PricingPage() {
                 </div>
                 <p className="text-sm text-zinc-400 leading-relaxed">
                   Type &quot;build a navbar&quot;, get generic CSS, ask to fix
-                  it to Tailwind, fix missing imports, argue about responsive
+                  it to Tailwind, fix missing imports, handle complex responsiveness
                   design.{" "}
                   <strong className="text-zinc-300 block mt-2">
                     (Time: ~25 mins)
