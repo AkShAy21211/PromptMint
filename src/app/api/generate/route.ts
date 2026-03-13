@@ -141,10 +141,15 @@ export async function POST(req: NextRequest) {
         }
 
         // ── Usage Limit & Pro Validation ────────────────────────────────────────
+        /* 💡 THE STRATEGIC HOOK (Magic 5):
+           We allow Guest and new Free users to use ALL Pro features (Claude, Flight Plans, etc.)
+           for their first 5 total prompts. This builds trust before asking for ₹149.
+        */
 
         let isUnlimited = false;
         let dbDown = false;
-        const LIMIT = 5;
+        let usageCount = 0;
+        const { TOTAL_FREE_PRO_LIMIT, MONTHLY_FREE_LIMIT } = await import("@/lib/constants");
 
         try {
             let profile = null;
@@ -155,12 +160,16 @@ export async function POST(req: NextRequest) {
                     .eq("id", user.id)
                     .single();
                 profile = data;
+                usageCount = profile?.usage_count || 0;
+            } else {
+                const { data: guestUsage } = await supabase.from("guest_usage").select("usage_count").eq("ip_hash", ip_hash).single();
+                usageCount = guestUsage?.usage_count || 0;
             }
 
             isUnlimited = !!(profile?.is_pro || profile?.plan_type === "pro");
 
             // Shared validation for Pro features (Free users & Guests)
-            if (!isUnlimited) {
+            if (!isUnlimited && usageCount >= TOTAL_FREE_PRO_LIMIT) {
                 const isInvalidFramework = stack.framework && !FREE_STACKS.framework.includes(stack.framework);
                 const isInvalidDatabase = stack.database && !FREE_STACKS.database.includes(stack.database);
                 const isInvalidApi = stack.apiPattern && !FREE_STACKS.apiPattern.includes(stack.apiPattern);
@@ -173,41 +182,32 @@ export async function POST(req: NextRequest) {
 
                 if (isInvalidFramework || isInvalidDatabase || isInvalidApi || isInvalidLanguage || isInvalidStyling || isInvalidAnimation || isInvalidDeployment || isInvalidAuth || isInvalidState) {
                     return NextResponse.json(
-                        { error: "PRO_REQUIRED", message: "One or more selected technologies require a Pro plan." },
+                        { error: "PRO_REQUIRED", message: "Free trial prompts exhausted. Upgrade to Pro to continue using these technologies!" },
                         { status: 403 }
                     );
                 }
             }
 
-            // Track usage
-            if (user) {
-                const currentCount = profile?.usage_count || 0;
-                if (!isUnlimited && currentCount >= LIMIT) {
-                    return NextResponse.json(
-                        { error: "LIMIT_REACHED", message: "Monthly free limit reached. Upgrade for more!" },
-                        { status: 403 }
-                    );
-                }
-                await supabase.from("profiles").update({ usage_count: currentCount + 1 }).eq("id", user.id);
-            } else {
-                // Guest tracking using ip_hash
-                const { data: guestUsage } = await supabase.from("guest_usage").select("usage_count").eq("ip_hash", ip_hash).single();
-                const guestCount = guestUsage?.usage_count || 0;
-                if (guestCount >= LIMIT) {
-                    return NextResponse.json(
-                        { error: "LIMIT_REACHED", message: "Guest limit reached. Sign in for more!" },
-                        { status: 403 }
-                    );
-                }
-                await supabase.from("guest_usage").upsert({ ip_hash: ip_hash, usage_count: guestCount + 1, last_used: new Date().toISOString() });
+            // Monthly/Guest limit check (moved to before generate but after usageCount fetch)
+            if (user && !isUnlimited && usageCount >= MONTHLY_FREE_LIMIT) {
+                return NextResponse.json(
+                    { error: "LIMIT_REACHED", message: "Monthly free limit reached. Upgrade for more!" },
+                    { status: 403 }
+                );
             }
+            if (!user && usageCount >= TOTAL_FREE_PRO_LIMIT) {
+                return NextResponse.json(
+                    { error: "LIMIT_REACHED", message: "Guest trial limit reached. Sign in for more!" },
+                    { status: 403 }
+                );
+            }
+
         } catch (err) {
             console.error("DB Resilience Mode:", err);
             dbDown = true;
         }
 
         // ── Generate ────────────────────────────────────────────────────────────
-
         const systemPrompt = buildSystemPrompt(userIdea, stack, {
             goalMode,
             targetModel,
@@ -218,19 +218,34 @@ export async function POST(req: NextRequest) {
         const result = await model.generateContent(systemPrompt);
         const text = result.response.text();
 
-        // ── Persistence ─────────────────────────────────────────────────────────
+        // ── Usage Tracking & Persistence ─────────────────────────────────────────
         let historySaved = false;
-        if (user && isUnlimited && !dbDown) {
+
+        // Only charge usage and save history if the AI didn't return a guardrail error
+        if (!text.startsWith("ERROR:")) {
             try {
-                const { error: saveError } = await supabase.from("prompts").insert({
-                    user_id: user.id,
-                    title: userIdea,
-                    content: text,
-                    stack: stack,
-                });
-                if (!saveError) historySaved = true;
+                if (user) {
+                    await supabase.from("profiles").update({ usage_count: usageCount + 1 }).eq("id", user.id);
+                } else {
+                    await supabase.from("guest_usage").upsert({ 
+                        ip_hash: ip_hash, 
+                        usage_count: usageCount + 1, 
+                        last_used: new Date().toISOString() 
+                    });
+                }
+
+                // Persistence (Pro History)
+                if (user && isUnlimited && !dbDown) {
+                    const { error: saveError } = await supabase.from("prompts").insert({
+                        user_id: user.id,
+                        title: userIdea,
+                        content: text,
+                        stack: stack,
+                    });
+                    if (!saveError) historySaved = true;
+                }
             } catch (e) {
-                console.error("Pro History Save Failed:", e);
+                console.error("Usage/History Tracking Failed:", e);
             }
         }
 

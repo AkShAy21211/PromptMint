@@ -23,6 +23,11 @@ export const FREE_STACKS = {
     stateManagement: ["None", "Context API"] as StateManagementType[],
 };
 
+// Strategic Hook Thresholds
+export const GUEST_PRO_LIMIT = 3;
+export const TOTAL_FREE_PRO_LIMIT = 5;
+export const MONTHLY_FREE_LIMIT = 5;
+
 export interface StackOption {
     name: string;
     category: string;
@@ -150,6 +155,7 @@ export const ALL_STACKS: Record<string, StackOption[]> = {
         { name: "CSS-in-JS", category: "General" },
     ],
     animation: [
+        { name: "None", category: "Clean", isPopular: true },
         { name: "Framer Motion", category: "High Performance", isPopular: true },
         { name: "React Spring", category: "Physics" },
         { name: "GSAP", category: "Power User" },
@@ -167,7 +173,6 @@ export const ALL_STACKS: Record<string, StackOption[]> = {
         { name: "Spline", category: "3D" },
         { name: "Rive", category: "Interactive" },
         { name: "LottieFiles", category: "Marketplace" },
-        { name: "None", category: "Clean", isPopular: true },
     ],
     deployment: [
         // Your originals

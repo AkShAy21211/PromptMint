@@ -29,6 +29,25 @@ export async function migrateLocalPrompts(userId: string) {
             .from('prompts')
             .insert(promptsToMigrate);
 
+        // SYNC USAGE COUNT: Transfer guest usage to account usage
+        const guestCountStr = localStorage.getItem("guest_prompt_count");
+        if (guestCountStr) {
+            const guestCount = parseInt(guestCountStr);
+            // Fetch current profile to ensure we don't overwrite higher usage
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("usage_count")
+                .eq("id", userId)
+                .single();
+            
+            if (profile && guestCount > profile.usage_count) {
+                await supabase
+                    .from("profiles")
+                    .update({ usage_count: guestCount })
+                    .eq("id", userId);
+            }
+        }
+
         if (!error) {
             // Success - clear local storage to prevent duplicate migrations
             localStorage.removeItem(STORAGE_KEY);

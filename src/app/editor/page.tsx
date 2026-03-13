@@ -35,15 +35,14 @@ import {
   FREE_STACKS,
   ALL_STACKS,
   STACK_PRESETS,
+  GUEST_PRO_LIMIT,
+  TOTAL_FREE_PRO_LIMIT,
+  MONTHLY_FREE_LIMIT,
 } from "@/lib/constants";
 import { detectConflicts } from "@/lib/detectConflicts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const MAX_FREE = 5;
 
 const GOAL_MODES: GoalMode[] = [
   "Scaffold",                    // Basic structure/boilerplate
@@ -134,9 +133,9 @@ export default function EditorPage() {
   const router = useRouter();
   const [userIdea, setUserIdea] = useState("");
   const [stack, setStack] = useState<Stack>({
-    styling: "shadcn/ui",
+    styling: "None",
     language: "TypeScript",
-    animation: "Framer Motion",
+    animation: "None",
     framework: "None",
     database: "None",
     apiPattern: "None",
@@ -161,8 +160,18 @@ export default function EditorPage() {
   const [showPresets, setShowPresets] = useState(false);
   const { toast } = useToast();
   const outputRef = useRef<HTMLDivElement>(null);
-  const { user, profile, loading: authLoading, supabase } = useAuth();
+  const { user, profile, loading: authLoading, supabase, refreshProfile } = useAuth();
 
+  // ─── Refined Usage Logic (Prevents Flickering) ──────────────────────────────
+  // Use profile values directly if available, fallback to local state for guest mode
+  // During migration, take the max to prevent dipping to 0 before DB sync
+  const effectiveUsageCount = profile ? Math.max(profile.usage_count, promptCount) : promptCount;
+  const effectiveIsPro = profile?.is_pro ?? isPro;
+
+  // Logic: Pro features unlocked if Pro plan OR in initial trial prompts
+  const trialLimit = user ? TOTAL_FREE_PRO_LIMIT : GUEST_PRO_LIMIT;
+  const hasProAccess = effectiveIsPro || effectiveUsageCount < trialLimit;
+  const maxFreePrompts = user ? MONTHLY_FREE_LIMIT : GUEST_PRO_LIMIT;
 
   // ─── Auth ──────────────────────────────────────────────────────────────────
 
@@ -170,15 +179,21 @@ export default function EditorPage() {
     if (user && profile) {
       setPromptCount(profile.usage_count);
       setIsPro(profile.is_pro);
-      if (profile.is_pro) {
-        migrateLocalPrompts(user.id);
+      
+      // Migration runs if guest usage hasn't been synced yet
+      const guestUsage = localStorage.getItem("guest_prompt_count");
+      if (guestUsage) {
+        migrateLocalPrompts(user.id).then(() => {
+          // If we had guest usage, we might have updated the DB, so refresh to be sure
+          if (refreshProfile) refreshProfile();
+        });
       }
     } else if (!authLoading) {
       const count = localStorage.getItem("guest_prompt_count");
       setPromptCount(count ? parseInt(count) : 0);
       setIsPro(false);
     }
-  }, [user, profile, authLoading]);
+  }, [user, profile, authLoading, refreshProfile]);
 
   // Handle local state sync on generation
   useEffect(() => {
@@ -217,7 +232,7 @@ export default function EditorPage() {
         const stackKey = key as keyof Stack;
         const freeOptions = FREE_STACKS[stackKey as keyof typeof FREE_STACKS] as string[] | undefined;
         
-        if (!isPro && freeOptions && !freeOptions.includes(val as string)) {
+        if (!hasProAccess && freeOptions && !freeOptions.includes(val as string)) {
           // Fallback to "None" or first free option if restricted
           // @ts-expect-error - Dynamic assignment to Stack keys
           updatedStack[stackKey] = "None";
@@ -252,7 +267,7 @@ export default function EditorPage() {
     if (!preset) return;
 
     // Check for pro restrictions
-    if (!isPro) {
+    if (!hasProAccess) {
       const restricted = Object.entries(preset).some(([key, val]) => {
         const freeOptions = FREE_STACKS[key as keyof typeof FREE_STACKS] as string[] | undefined;
         return freeOptions && !freeOptions.includes(val as string);
@@ -293,7 +308,7 @@ export default function EditorPage() {
     const freeOptions = FREE_STACKS[key as keyof typeof FREE_STACKS] as string[] | undefined;
 
     // Check if the option is locked for free users (if key exists in FREE_STACKS)
-    if (!isPro && freeOptions && !freeOptions.includes(val)) {
+    if (!hasProAccess && freeOptions && !freeOptions.includes(val)) {
       toast({
         title: "Pro Feature",
         description:
@@ -306,10 +321,10 @@ export default function EditorPage() {
   };
 
   const handleSaveRecipe = async () => {
-    if (!isPro) {
+    if (!hasProAccess) {
       toast({
         title: "Pro Feature",
-        description: "Saving prompt recipes is available on Pro plans.",
+        description: "Saving prompt recipes is available with Pro Access.",
       });
       router.push("/pricing");
       return;
@@ -374,7 +389,7 @@ export default function EditorPage() {
       return;
     }
 
-    if (!isPro && promptCount >= MAX_FREE) {
+    if (!isPro && promptCount >= maxFreePrompts) {
       setIsLimitModalOpen(true);
       return;
     }
@@ -393,9 +408,9 @@ export default function EditorPage() {
 
       if (!response.ok) {
         if (response.status === 403 || data.error === "LIMIT_REACHED") {
-          setPromptCount(MAX_FREE);
+          setPromptCount(maxFreePrompts);
           if (!user) {
-            localStorage.setItem("guest_prompt_count", MAX_FREE.toString());
+            localStorage.setItem("guest_prompt_count", maxFreePrompts.toString());
             setIsLoginModalOpen(true);
           }
           throw new Error(data.message || "Limit reached. Please sign in!");
@@ -458,8 +473,8 @@ export default function EditorPage() {
         description: isPro
           ? "Architecture orchestrated! (unlimited)"
           : user
-            ? `Architecture generated!(${newCount} / ${MAX_FREE} used)`
-            : `Architecture generated!(${newCount} / ${MAX_FREE} total)`,
+            ? `Architecture generated! (${promptCount + 1} / ${MONTHLY_FREE_LIMIT} used)`
+            : `Guest architecture generated! (${promptCount + 1} / ${GUEST_PRO_LIMIT} total)`,
       });
 
       if (window.innerWidth < 1024) {
@@ -523,7 +538,7 @@ export default function EditorPage() {
                   <div className="w-2 h-2 rounded-full bg-muted-foreground/30 dark:bg-zinc-700 animate-pulse" />
                   <div className="h-3 w-20 bg-muted dark:bg-zinc-800 rounded-md animate-pulse" />
                 </div>
-              ) : isPro ? (
+              ) : effectiveIsPro ? (
                 <Link
                   href="/account"
                   className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -535,7 +550,6 @@ export default function EditorPage() {
                 </Link>
               ) : (
                 <div className="flex items-center gap-3">
-
                   <Link href="/pricing">
                     <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 hover:bg-violet-500/10 border-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full">
                       <Sparkles className="w-4 h-4" />
@@ -546,23 +560,31 @@ export default function EditorPage() {
                     <div
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        promptCount >= MAX_FREE
+                        effectiveUsageCount >= maxFreePrompts
                           ? "bg-rose-500"
-                          : "bg-emerald-500",
+                          : hasProAccess && !effectiveIsPro
+                            ? "bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+                            : "bg-emerald-500",
                       )}
                     />
                     <span
                       className={cn(
                         "text-xs font-bold uppercase tracking-wider",
-                        promptCount >= MAX_FREE
+                        effectiveUsageCount >= maxFreePrompts
                           ? "text-rose-500"
-                          : "text-emerald-500",
+                          : hasProAccess && !effectiveIsPro
+                            ? "text-cyan-400"
+                            : "text-emerald-500",
                       )}
                     >
-                      {Math.max(0, MAX_FREE - promptCount)}/{MAX_FREE} PROMPTS LEFT
+                      {hasProAccess && !effectiveIsPro ? (
+                        `${maxFreePrompts - effectiveUsageCount} PRO TRIAL LEFT`
+                      ) : (
+                        `${Math.max(0, maxFreePrompts - effectiveUsageCount)}/${maxFreePrompts} PROMPTS LEFT`
+                      )}
                     </span>
                   </div>
-                  {promptCount >= MAX_FREE && (
+                  {effectiveUsageCount >= maxFreePrompts && (
                     <button
                       onClick={() => router.push("/pricing")}
                       className="text-[10px] font-bold text-violet-400 hover:text-violet-300 transition-colors uppercase tracking-widest border-l border-zinc-800 pl-3"
@@ -785,7 +807,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.framework}
                             selected={stack.framework ?? "None"}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.framework
                                   .filter((o) => !FREE_STACKS.framework.includes(o.name as FrameworkType))
@@ -802,7 +824,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.database}
                             selected={stack.database ?? "None"}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.database
                                   .filter((o) => !FREE_STACKS.database.includes(o.name as DatabaseType))
@@ -819,7 +841,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.apiPattern}
                             selected={stack.apiPattern ?? "None"}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.apiPattern
                                   .filter((o) => !FREE_STACKS.apiPattern.includes(o.name as ApiPatternType))
@@ -840,7 +862,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.deployment}
                             selected={stack.deployment ?? "None"}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.deployment
                                   .filter((o) => !FREE_STACKS.deployment.includes(o.name as DeploymentType))
@@ -857,7 +879,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.auth}
                             selected={stack.auth ?? "None"}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.auth
                                   .filter((o) => !FREE_STACKS.auth.includes(o.name as AuthType))
@@ -874,7 +896,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.stateManagement}
                             selected={stack.stateManagement ?? "None"}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.stateManagement
                                   .filter((o) => !FREE_STACKS.stateManagement.includes(o.name as StateManagementType))
@@ -895,7 +917,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.language}
                             selected={stack.language}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.language
                                   .filter((o) => !FREE_STACKS.language.includes(o.name as LanguageType))
@@ -912,7 +934,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.styling}
                             selected={stack.styling}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.styling
                                   .filter((o) => !FREE_STACKS.styling.includes(o.name as StylingType))
@@ -929,7 +951,7 @@ export default function EditorPage() {
                             options={ALL_STACKS.animation}
                             selected={stack.animation}
                             lockedOptions={
-                              isPro
+                              hasProAccess
                                 ? []
                                 : ALL_STACKS.animation
                                   .filter((o) => !FREE_STACKS.animation.includes(o.name as AnimationType))
@@ -959,17 +981,16 @@ export default function EditorPage() {
                   <div className="flex flex-wrap gap-2">
                     {GOAL_MODES.map((mode) => {
                       const isProMode = PRO_GOAL_MODES.includes(mode);
-                      const isLocked = !isPro && isProMode;
                       
                       return (
                         <button
                           key={mode}
                           type="button"
                           onClick={() => {
-                            if (isLocked) {
+                            if (!hasProAccess && isProMode) {
                               toast({
                                 title: "Pro Feature",
-                                description: `${mode} is an industrial-grade mode available on Pro plans.`,
+                                description: `${mode} is an industrial-grade mode available with Pro Access.`,
                               });
                               router.push("/pricing");
                               return;
@@ -981,14 +1002,16 @@ export default function EditorPage() {
                             goalMode === mode
                               ? "bg-cyan-600/10 border-cyan-500/60 text-cyan-400"
                               : "bg-background border-border text-muted-foreground hover:border-cyan-500/40 hover:text-cyan-300",
-                            isLocked && "opacity-70 grayscale-[0.5]"
+                            !hasProAccess && isProMode && "opacity-70 grayscale-[0.5]"
                           )}
                         >
                           {mode}
-                          {isProMode && (
+                          {isProMode && !isPro && (
                             <span className={cn(
                               "text-[8px] font-bold uppercase tracking-tighter px-1 rounded-sm",
-                              isLocked ? "bg-violet-500/10 text-violet-400" : "bg-cyan-500/10 text-cyan-500"
+                              !hasProAccess 
+                                ? "bg-violet-500/10 text-violet-400" 
+                                : "bg-cyan-500/10 text-cyan-400"
                             )}>
                               Pro
                             </span>
@@ -1007,17 +1030,16 @@ export default function EditorPage() {
                   <div className="flex flex-wrap gap-2">
                     {TARGET_MODELS.map((model) => {
                       const isProModel = PRO_MODELS.includes(model);
-                      const isLocked = !isPro && isProModel;
                       
                       return (
                         <button
                           key={model}
                           type="button"
                           onClick={() => {
-                            if (isLocked) {
+                            if (!hasProAccess && isProModel) {
                               toast({
                                 title: "Pro Feature",
-                                description: `${model} optimization is available on Pro plans.`,
+                                description: `${model} optimization is available with Pro Access.`,
                               });
                               router.push("/pricing");
                               return;
@@ -1029,14 +1051,16 @@ export default function EditorPage() {
                             targetModel === model
                               ? "bg-violet-600/10 border-violet-500/60 text-violet-400"
                               : "bg-background border-border text-muted-foreground hover:border-violet-500/40 hover:text-violet-300",
-                            isLocked && "opacity-70 grayscale-[0.5]"
+                            !hasProAccess && isProModel && "opacity-70 grayscale-[0.5]"
                           )}
                         >
                           {model}
-                          {isProModel && (
+                          {isProModel && !isPro && (
                             <span className={cn(
                               "text-[8px] font-bold uppercase tracking-tighter px-1 rounded-sm",
-                              isLocked ? "bg-violet-500/10 text-violet-400" : "bg-violet-500/10 text-violet-400"
+                              !hasProAccess 
+                                ? "bg-violet-500/10 text-violet-400" 
+                                : "bg-cyan-500/10 text-cyan-400"
                             )}>
                               Pro
                             </span>
@@ -1052,7 +1076,7 @@ export default function EditorPage() {
                   <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">
                     Architecture Guardrails
                   </p>
-                  {!isPro && (
+                  {!hasProAccess && (
                     <span className="text-[9px] font-bold text-violet-400 uppercase tracking-widest bg-violet-400/10 px-1.5 py-0.5 rounded">Pro Only</span>
                   )}
                 </div>
@@ -1062,7 +1086,7 @@ export default function EditorPage() {
                   <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Blueprints:</span>
                   <button
                     onClick={() => {
-                      if (!isPro) { router.push("/pricing"); return; }
+                      if (!hasProAccess) { router.push("/pricing"); return; }
                       setEngineeringDefaults([
                         "Modular feature-based folders",
                         "App Router patterns (Next.js)",
@@ -1077,7 +1101,7 @@ export default function EditorPage() {
                   </button>
                   <button
                     onClick={() => {
-                      if (!isPro) { router.push("/pricing"); return; }
+                      if (!hasProAccess) { router.push("/pricing"); return; }
                       setEngineeringDefaults([
                         "Mobile-first responsive design",
                         "Loading states & Suspense",
@@ -1091,7 +1115,7 @@ export default function EditorPage() {
                   </button>
                   <button
                     onClick={() => {
-                      if (!isPro) { router.push("/pricing"); return; }
+                      if (!hasProAccess) { router.push("/pricing"); return; }
                       setEngineeringDefaults([
                         "Strict TypeScript (No anys)",
                         "ESLint + Prettier standards"
@@ -1110,10 +1134,10 @@ export default function EditorPage() {
                         key={def}
                         type="button"
                         onClick={() => {
-                          if (!isPro) {
+                          if (!hasProAccess) {
                             toast({
                               title: "Pro Feature",
-                              description: "Expert Architecture Guardrails are available on Pro plans.",
+                              description: "Expert Architecture Guardrails are available with Pro Access.",
                             });
                             router.push("/pricing");
                             return;
@@ -1127,7 +1151,7 @@ export default function EditorPage() {
                           isSelected
                             ? "bg-emerald-600/10 border-emerald-500/60 text-emerald-500"
                             : "bg-background border-border text-muted-foreground hover:border-emerald-500/40 hover:text-emerald-400",
-                          !isPro && "opacity-50 cursor-not-allowed"
+                          !hasProAccess && "opacity-50 cursor-not-allowed"
                         )}
                       >
                         <div className={cn(
@@ -1204,7 +1228,7 @@ export default function EditorPage() {
                 <PromptOutput
                   result={result}
                   isLoading={isLoading}
-                  isPro={isPro}
+                  isPro={hasProAccess}
                 />
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-card/20 dark:bg-zinc-900/20 border border-dashed border-border dark:border-zinc-800 rounded-3xl min-h-[500px]">
@@ -1285,13 +1309,13 @@ export default function EditorPage() {
                   }, 100);
                 }}
                 user={user}
-                isPro={isPro}
+                isPro={hasProAccess}
                 refreshTrigger={promptCount}
               />
 
               <PromptRecipes
                 user={user}
-                isPro={isPro}
+                isPro={hasProAccess}
                 refreshTrigger={recipeRefreshTrigger}
                 onLoadRecipe={(recipe) => {
                   if (recipe.idea_hint) setUserIdea(recipe.idea_hint);
@@ -1332,6 +1356,7 @@ export default function EditorPage() {
           setIsLoginModalOpen(true);
         }}
         isGuest={!user}
+        promptCount={promptCount}
       />
     </main>
   );

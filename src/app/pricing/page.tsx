@@ -254,8 +254,8 @@ export default function PricingPage() {
               </span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-              From curious guests to elite architects. Choose the tier that
-              matches your engineering ambition.
+              Start with your **Magic 5** Pro trial—no credit card required. 
+              Choose the tier that matches your engineering ambition when you&apos;re ready to scale.
             </p>
           </motion.div>
         </header>
@@ -293,10 +293,9 @@ export default function PricingPage() {
         </div>
 
         <p className="text-sm text-muted-foreground max-w-3xl mx-auto text-center mb-8">
-          Note: Free tier limits reset every 30 days. Guests and signed-in free
-          accounts both receive 5 prompts per month — guests are tracked by IP
-          (local/guest storage) while signed-in users are tracked on your
-          account.
+          Note: Free tier limits reset every 30 days. Guests receive 3 Pro prompts 
+          initially, and signing up unlocks 2 additional Pro trial prompts (+5 total). 
+          After the trial, you maintain a 5 prompts/month limit on standard features.
         </p>
 
         {/* ROI Justification Section */}

@@ -224,6 +224,16 @@ export default function GuidePage() {
                                     </div>
                                 </li>
                             </ul>
+
+                            <div className="mt-8 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
+                                <p className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                    <Zap className="w-3 h-3" />
+                                    Pro Tip: Goal Selection
+                                </p>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Use <strong>Agentic Flight Plan</strong> first to define the logic, then switch to <strong>Production-ready</strong> to generate the actual implementation components.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="p-8 rounded-[2rem] bg-zinc-900 border border-zinc-800 text-white space-y-6 relative overflow-hidden">
@@ -422,28 +432,92 @@ export default function GuidePage() {
                         </div>
                     </div>
 
-                    <div className="mt-8 p-6 rounded-2xl bg-cyan-500/5 border border-cyan-500/10">
-                        <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-cyan-500" />
-                            Trigger Phrases for Full Inference
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                            {[
-                                "choose for me",
-                                "pick the best",
-                                "recommend a stack",
-                                "suggest technologies",
-                                "you decide",
-                                "auto-select everything",
-                            ].map((phrase) => (
-                                <span
-                                    key={phrase}
-                                    className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-mono text-cyan-600 dark:text-cyan-400"
-                                >
-                                    &quot;{phrase}&quot;
-                                </span>
-                            ))}
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-6 rounded-2xl bg-cyan-500/5 border border-cyan-500/10">
+                            <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-cyan-500" />
+                                Trigger Phrases for Full Inference
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    "choose for me",
+                                    "pick the best",
+                                    "recommend a stack",
+                                    "suggest technologies",
+                                    "you decide",
+                                    "auto-select everything",
+                                ].map((phrase) => (
+                                    <span
+                                        key={phrase}
+                                        className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-mono text-cyan-600 dark:text-cyan-400"
+                                    >
+                                        &quot;{phrase}&quot;
+                                    </span>
+                                ))}
+                            </div>
                         </div>
+
+                        <div className="p-6 rounded-2xl bg-violet-500/5 border border-violet-500/10">
+                            <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+                                <ShieldCheck className="w-4 h-4 text-violet-500" />
+                                Pro Tip: UI Interaction
+                            </h4>
+                            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                                Did you know? You can <strong>click the sector title</strong> (e.g., &quot;Frontend&quot; or &quot;Database&quot;) in Step 2 to quickly toggle between <strong>None</strong> and <strong>Smart Inference</strong> for that entire category.
+                            </p>
+                            <div className="inline-flex items-center gap-2 text-[10px] font-bold text-violet-500 uppercase tracking-widest border border-violet-500/20 rounded-lg px-2 py-1">
+                                <Zap className="w-3 h-3" />
+                                Use this to save time
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* The Quality Blueprint */}
+                <section className="mb-32">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-black mb-4 tracking-tight">The 100% Quality Blueprint</h2>
+                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                            Follow this 4-step surgical workflow to ensure your minted prompts produce industrial-grade logic every single time.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        {[
+                            {
+                                step: "01",
+                                title: "Prime for Inference",
+                                desc: "End your idea with \"choose the best stack for me\". This triggers the full engine to architect your entire foundation.",
+                                icon: <Sparkles className="w-5 h-5 text-amber-500" />
+                            },
+                            {
+                                step: "02",
+                                title: "Inject Guardrails",
+                                desc: "Switch to Visual/Infra tabs and ensure \"Modular Folders\" and \"Strict Type Safety\" are active. These prevent lazy code.",
+                                icon: <ShieldCheck className="w-5 h-5 text-indigo-500" />
+                            },
+                            {
+                                step: "03",
+                                title: "Depth selection",
+                                desc: "Set Goal Mode to \"Production-ready\" or \"Agentic Flight Plan\". Never settle for Default unless it's a quick prototype.",
+                                icon: <Target className="w-5 h-5 text-rose-500" />
+                            },
+                            {
+                                step: "04",
+                                title: "Model Alignment",
+                                desc: "Target \"Claude 3.5 Sonnet\" for logic depth or \"AI IDEs\" if you are copying directly into Cursor's Composer.",
+                                icon: <Cpu className="w-5 h-5 text-cyan-500" />
+                            }
+                        ].map((item) => (
+                            <div key={item.step} className="relative group">
+                                <div className="p-8 rounded-3xl bg-card border border-border group-hover:border-violet-500/30 transition-all">
+                                    <span className="text-4xl font-black text-muted-foreground/10 absolute top-4 right-6 group-hover:text-violet-500/20 transition-colors">{item.step}</span>
+                                    <div className="mb-6">{item.icon}</div>
+                                    <h3 className="text-lg font-black mb-3">{item.title}</h3>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </section>
 
